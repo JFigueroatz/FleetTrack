@@ -1,0 +1,44 @@
+# Secrets
+.env
+*.pfx
+*.pem
+**/appsettings.*.local.json
+
+# .NET
+bin/
+obj/
+*.user
+
+# Node
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+
+# MAUI / Android
+**/android/app/build/
+*.apk
+*.aab
+*.keystore
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+
+# Ansible
+*.retry
+vault_pass.txt
+
+# Reports (contenido generado por los pipelines, no por el equipo)
+reports/**/*
+!reports/**/.gitkeep
+
+# OS / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
