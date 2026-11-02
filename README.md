@@ -33,6 +33,16 @@ reports/
   sonar/ fortify/ dependency-check/ zap/ performance/ accessibility/
 ```
 
+## Requisitos para compilar `mobile/`
+
+.NET SDK 10 con el workload `maui-android` (`dotnet workload install maui-android`) y el Android SDK. Si `dotnet build` falla con `XA5300` (Android SDK no encontrado), instálalo con:
+
+```bash
+dotnet build mobile -t:InstallAndroidDependencies -p:AcceptAndroidSDKLicenses=True -p:AndroidSdkDirectory="<ruta-destino>"
+```
+
+y define la variable de entorno `ANDROID_HOME` apuntando a esa misma ruta.
+
 ## Flujo de trabajo
 
 Issue con criterios de aceptación → rama `feat/<numero>-<descripcion>` o `fix/<numero>-<descripcion>` → commits → pruebas → Pull Request con resumen y evidencia → revisión y aprobación de Alejandro → checks de Jenkins en verde → merge → cierre del Issue.
