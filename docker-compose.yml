@@ -75,5 +75,13 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  web:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
 volumes:
   postgres-data:
