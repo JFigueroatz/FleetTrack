@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FleetTrack.Api/FleetTrack.Api.csproj" />
+    <Project Path="src/FleetTrack.Consumer/FleetTrack.Consumer.csproj" />
+    <Project Path="src/FleetTrack.Domain/FleetTrack.Domain.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FleetTrack.Api.Tests/FleetTrack.Api.Tests.csproj" />
+  </Folder>
+</Solution>
