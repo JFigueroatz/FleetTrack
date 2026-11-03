@@ -52,6 +52,8 @@ services:
       Jwt__Secret: ${JWT_SECRET}
     ports:
       - "8080:8080"
+    volumes:
+      - evidence-data:/app/evidence
     depends_on:
       postgres:
         condition: service_healthy
@@ -85,3 +87,4 @@ services:
 
 volumes:
   postgres-data:
+  evidence-data:
