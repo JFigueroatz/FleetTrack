@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FleetTrack.Api\FleetTrack.Api.csproj" />
+    <ProjectReference Include="..\..\src\FleetTrack.Consumer\FleetTrack.Consumer.csproj" />
   </ItemGroup>
 
 </Project>

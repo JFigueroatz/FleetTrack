@@ -15,16 +15,18 @@
             <CollectionView x:Name="DeliveriesView">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Grid Padding="0,8" ColumnDefinitions="*,Auto,Auto,Auto">
+                        <Grid Padding="0,8" ColumnDefinitions="*,Auto,Auto,Auto,Auto">
                             <Label Text="{Binding Label}" VerticalOptions="Center" />
                             <Button Grid.Column="1" Text="Iniciar" Clicked="OnStartClicked" CommandParameter="{Binding Id}" />
                             <Button Grid.Column="2" Text="Evidencia" Clicked="OnEvidenceClicked" CommandParameter="{Binding Id}" />
                             <Button Grid.Column="3" Text="Finalizar" Clicked="OnCompleteClicked" CommandParameter="{Binding Id}" />
+                            <Button Grid.Column="4" Text="Fallida" Clicked="OnFailClicked" CommandParameter="{Binding Id}" />
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
+            <Label x:Name="PendingLabel" TextColor="DarkOrange" />
             <Label x:Name="MessageLabel" TextColor="Green" />
             <Label x:Name="ErrorLabel" TextColor="Red" />
         </VerticalStackLayout>

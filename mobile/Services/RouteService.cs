@@ -47,6 +47,13 @@ public class RouteService(HttpClient httpClient, SessionState session)
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task FailDeliveryAsync(Guid deliveryId, string? reason)
+    {
+        AttachToken();
+        var response = await httpClient.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/api/deliveries/{deliveryId}/fail", new { reason });
+        response.EnsureSuccessStatusCode();
+    }
+
     public async Task UploadEvidenceAsync(Guid deliveryId, Stream photoStream, string contentType, string fileName)
     {
         AttachToken();
@@ -59,10 +66,10 @@ public class RouteService(HttpClient httpClient, SessionState session)
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task SendLocationAsync(double latitude, double longitude)
+    public async Task SendLocationAsync(double latitude, double longitude, Guid eventId, DateTimeOffset recordedAt)
     {
         AttachToken();
-        var response = await httpClient.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/api/tracking", new { latitude, longitude });
+        var response = await httpClient.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/api/tracking", new { latitude, longitude, eventId, recordedAt });
         response.EnsureSuccessStatusCode();
     }
 }
