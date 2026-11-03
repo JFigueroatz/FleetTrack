@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="FleetTrack.Mobile.Pages.RoutePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Mi ruta">
+
+    <VerticalStackLayout Padding="24" Spacing="12">
+        <Label x:Name="DriverLabel" FontSize="20" FontAttributes="Bold" />
+        <Label Text="Ruta simulada (sin conexion al API de rutas todavia):" />
+        <Label x:Name="SummaryLabel" />
+        <Label x:Name="CachedAtLabel" FontSize="12" Opacity="0.7" />
+    </VerticalStackLayout>
+
+</ContentPage>
