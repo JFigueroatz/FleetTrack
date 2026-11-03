@@ -17,7 +17,7 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate("/clientes");
+      navigate("/dashboard");
     } catch (err) {
       setError(err instanceof ApiError && err.status === 401
         ? "Correo o contrasena incorrectos."
