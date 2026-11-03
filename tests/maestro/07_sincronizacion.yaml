@@ -1,0 +1,10 @@
+appId: com.companyname.fleettrack.mobile
+---
+# Flujo 7/8: sincronizacion. Continuacion de 06_desconexion: el agente Jenkins reconecta la red
+# (`adb shell svc wifi enable && adb shell svc data enable`) y este flujo confirma que la cola pendiente se vacia
+# sin duplicar la operacion (ver SyncService y PendingOperation).
+- runFlow: 06_desconexion.yaml
+- extendedWaitUntil:
+    notVisible: "Sin conexion.*operacion.*pendiente"
+    timeout: 30000
+- assertVisible: "Entrega finalizada."

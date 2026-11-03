@@ -1,0 +1,8 @@
+appId: com.companyname.fleettrack.mobile
+---
+# Flujo 6/8: desconexion. Maestro no controla el estado de red del dispositivo; el agente Jenkins con el
+# emulador Android corre `adb shell svc wifi disable && adb shell svc data disable` antes de este paso
+# y los reactiva despues del flujo 07 (ver infrastructure/jenkins, pendiente). Aqui solo se valida la UI offline.
+- runFlow: 03_iniciar_entrega.yaml
+- tapOn: "Finalizar"
+- assertVisible: "Sin conexion.*operacion.*pendiente"

@@ -1,0 +1,10 @@
+appId: com.companyname.fleettrack.mobile
+---
+# Flujo 1/8: login. Requiere el seed de FleetTrack.Api corriendo y accesible desde el emulador (10.0.2.2:8080).
+- launchApp
+- tapOn: "Correo"
+- inputText: "conductor.prueba@fleettrack.test"
+- tapOn: "Contrasena"
+- inputText: "Conductor123!"
+- tapOn: "Ingresar"
+- assertVisible: "Conductor de Prueba"

@@ -1,0 +1,8 @@
+appId: com.companyname.fleettrack.mobile
+---
+# Flujo 2/8: ruta. Requiere una ruta ya asignada al conductor de prueba (POST /api/routes desde el supervisor).
+- runFlow: 01_login.yaml
+- assertVisible: "Ruta.*vehiculo asignado"
+- assertVisible:
+    text: ".*Zona 1.*|.*Cliente.*" # al menos una entrega de la ruta listada
+    optional: true

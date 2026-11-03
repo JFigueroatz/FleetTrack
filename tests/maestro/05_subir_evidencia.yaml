@@ -1,0 +1,12 @@
+appId: com.companyname.fleettrack.mobile
+---
+# Flujo 5/8: evidencia. Requiere permiso de camara y que el emulador tenga una imagen de prueba disponible
+# (Android Studio emulators devuelven una foto de prueba fija al capturar sin camara real).
+- launchApp:
+    permissions:
+      camera: allow
+- runFlow: 03_iniciar_entrega.yaml
+- tapOn: "Evidencia"
+- extendedWaitUntil:
+    visible: "Evidencia guardada."
+    timeout: 15000
