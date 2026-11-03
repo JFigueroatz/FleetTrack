@@ -1,0 +1,34 @@
+---
+# Nginx como reverse proxy: expone el dashboard (puerto 3000 del contenedor web) y la API (8080) en 80/443,
+# evitando publicar los puertos internos directamente en Internet.
+- name: Instalar nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+
+- name: Desplegar la configuracion del sitio FleetTrack
+  ansible.builtin.template:
+    src: fleettrack.conf.j2
+    dest: /etc/nginx/sites-available/fleettrack.conf
+    mode: "0644"
+  notify: Recargar nginx
+
+- name: Habilitar el sitio FleetTrack
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/fleettrack.conf
+    dest: /etc/nginx/sites-enabled/fleettrack.conf
+    state: link
+  notify: Recargar nginx
+
+- name: Deshabilitar el sitio default de nginx
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Recargar nginx
+
+- name: Asegurar que nginx esta habilitado y corriendo
+  ansible.builtin.systemd:
+    name: nginx
+    state: started
+    enabled: true

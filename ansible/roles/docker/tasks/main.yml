@@ -1,0 +1,44 @@
+---
+# Instala Docker Engine y el plugin Compose desde el repositorio oficial de Docker (no el paquete de Ubuntu, que va
+# atrasado). Referencia: docs.docker.com/engine/install/ubuntu/
+- name: Instalar dependencias para el repositorio de Docker
+  ansible.builtin.apt:
+    name: ["ca-certificates", "curl", "gnupg"]
+    state: present
+    update_cache: true
+
+- name: Crear directorio para llaves apt
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Descargar la llave GPG de Docker
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+- name: Agregar el repositorio de Docker
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ ansible_architecture == 'aarch64' | ternary('arm64', 'amd64') }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker
+
+- name: Instalar Docker Engine y el plugin Compose
+  ansible.builtin.apt:
+    name: ["docker-ce", "docker-ce-cli", "containerd.io", "docker-compose-plugin"]
+    state: present
+    update_cache: true
+
+- name: Agregar el usuario administrador al grupo docker
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Asegurar que el servicio docker esta habilitado y corriendo
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
