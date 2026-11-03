@@ -1,11 +1,13 @@
 using System.Text;
 using FleetTrack.Api.Auth;
+using FleetTrack.Api.Messaging;
 using FleetTrack.Api.Persistence;
 using FleetTrack.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,10 +53,17 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddHostedService<OutboxPublisher>();
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    // Timeouts cortos y sin abortar al arrancar: si Redis cae, la API sigue y degrada a PostgreSQL en vez de colgarse.
+    var redis = ConfigurationOptions.Parse(builder.Configuration.GetConnectionString("Redis")!);
+    redis.AbortOnConnectFail = false;
+    redis.ConnectTimeout = 1000;
+    redis.SyncTimeout = 1000;
+    redis.AsyncTimeout = 1000;
+    options.ConfigurationOptions = redis;
 });
 
 const string WebClientCorsPolicy = "WebClient";
@@ -64,7 +73,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
                 ?? ["http://localhost:3000", "http://localhost:5173"])
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod()
+            .WithExposedHeaders("X-Redis-Status"));
 });
 
 var app = builder.Build();

@@ -15,6 +15,8 @@ public class FleetTrackDbContext(DbContextOptions<FleetTrackDbContext> options)
     public DbSet<Delivery> Deliveries => Set<Delivery>();
     public DbSet<DeliveryEvidence> DeliveryEvidences => Set<DeliveryEvidence>();
     public DbSet<TrackingEvent> TrackingEvents => Set<TrackingEvent>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<EventLog> EventLogs => Set<EventLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,5 +76,8 @@ public class FleetTrackDbContext(DbContextOptions<FleetTrackDbContext> options)
 
         modelBuilder.Entity<TrackingEvent>()
             .HasIndex(t => new { t.DriverId, t.RecordedAt });
+
+        modelBuilder.Entity<OutboxMessage>()
+            .HasIndex(o => new { o.PublishedAt, o.OccurredAt });
     }
 }

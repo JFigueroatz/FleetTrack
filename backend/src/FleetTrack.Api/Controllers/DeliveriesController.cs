@@ -3,6 +3,7 @@ using FleetTrack.Api.Persistence;
 using FleetTrack.Domain;
 using FleetTrack.Domain.Entities;
 using FleetTrack.Domain.Enums;
+using FleetTrack.Domain.Events;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FleetTrack.Api.Controllers;
 
 public record DeliveryStatusResponse(Guid Id, string Status);
+public record FailDeliveryRequest(string? Reason);
 
 [ApiController]
 [Route("api/deliveries")]
@@ -20,42 +22,65 @@ public class DeliveriesController(FleetTrackDbContext db, IWebHostEnvironment en
     private const long MaxEvidenceBytes = 5 * 1024 * 1024;
 
     [HttpPost("{id:guid}/start")]
-    public async Task<ActionResult<DeliveryStatusResponse>> Start(Guid id)
-    {
-        var delivery = await LoadOwnedDeliveryAsync(id);
-        if (delivery is null)
+    public Task<ActionResult<DeliveryStatusResponse>> Start(Guid id) =>
+        TransitionAsync(id, (d, now) =>
         {
-            return Forbid();
-        }
-        if (delivery is { Status: DeliveryStatus.Pending })
-        {
-            delivery.Status = DeliveryStatus.InProgress;
-            delivery.StartedAt = DateTimeOffset.UtcNow;
-            await db.SaveChangesAsync();
-        }
+            if (d.Status != DeliveryStatus.Pending)
+            {
+                return null;
+            }
 
-        return Ok(new DeliveryStatusResponse(delivery.Id, delivery.Status.ToString()));
-    }
+            var route = d.Route!;
+            d.Status = DeliveryStatus.InProgress;
+            d.StartedAt = now;
+            db.Enqueue(EventTypes.DeliveryStarted, new DeliveryStarted(d.Id, route.Id, route.DriverId, now), now);
+
+            if (route.Status == RouteStatus.Planned)
+            {
+                route.Status = RouteStatus.InProgress;
+                db.Enqueue(EventTypes.RouteStarted, new RouteStarted(route.Id, route.DriverId, now), now);
+            }
+            return null;
+        });
 
     [HttpPost("{id:guid}/complete")]
-    public async Task<ActionResult<DeliveryStatusResponse>> Complete(Guid id)
-    {
-        var delivery = await LoadOwnedDeliveryAsync(id);
-        if (delivery is null)
+    public Task<ActionResult<DeliveryStatusResponse>> Complete(Guid id) =>
+        TransitionAsync(id, (d, now) =>
         {
-            return Forbid();
-        }
+            // Idempotente: una segunda llamada (reenvio por reconexion o doble clic concurrente) no vuelve a procesar ni a emitir el evento.
+            if (d.Status == DeliveryStatus.Completed)
+            {
+                return null;
+            }
+            if (d.Status == DeliveryStatus.Failed)
+            {
+                return "La entrega ya fue marcada como fallida.";
+            }
 
-        // Idempotente: una segunda llamada (reenvio por reconexion) no vuelve a procesar la entrega.
-        if (delivery.Status != DeliveryStatus.Completed)
+            d.Status = DeliveryStatus.Completed;
+            d.CompletedAt = now;
+            db.Enqueue(EventTypes.DeliveryCompleted, new DeliveryCompleted(d.Id, d.RouteId, d.Route!.DriverId, now), now);
+            return null;
+        });
+
+    [HttpPost("{id:guid}/fail")]
+    public Task<ActionResult<DeliveryStatusResponse>> Fail(Guid id, [FromBody] FailDeliveryRequest request) =>
+        TransitionAsync(id, (d, now) =>
         {
-            delivery.Status = DeliveryStatus.Completed;
-            delivery.CompletedAt = DateTimeOffset.UtcNow;
-            await db.SaveChangesAsync();
-        }
+            if (d.Status == DeliveryStatus.Failed)
+            {
+                return null;
+            }
+            if (d.Status == DeliveryStatus.Completed)
+            {
+                return "La entrega ya fue completada.";
+            }
 
-        return Ok(new DeliveryStatusResponse(delivery.Id, delivery.Status.ToString()));
-    }
+            d.Status = DeliveryStatus.Failed;
+            d.CompletedAt = now;
+            db.Enqueue(EventTypes.DeliveryFailed, new DeliveryFailed(d.Id, d.RouteId, d.Route!.DriverId, request.Reason ?? string.Empty, now), now);
+            return null;
+        });
 
     [HttpPost("{id:guid}/evidence")]
     [RequestSizeLimit(MaxEvidenceBytes)]
@@ -70,6 +95,12 @@ public class DeliveriesController(FleetTrackDbContext db, IWebHostEnvironment en
         if (file.Length == 0 || file.Length > MaxEvidenceBytes || !AllowedEvidenceTypes.Contains(file.ContentType))
         {
             return BadRequest("Evidencia invalida: solo JPEG/PNG hasta 5 MB.");
+        }
+
+        // Idempotente: el movil puede reenviar la foto tras un corte; ya hay evidencia, no se guarda otra copia.
+        if (await db.DeliveryEvidences.AnyAsync(e => e.DeliveryId == delivery.Id))
+        {
+            return Ok();
         }
 
         var extension = file.ContentType == "image/png" ? ".png" : ".jpg";
@@ -93,6 +124,36 @@ public class DeliveriesController(FleetTrackDbContext db, IWebHostEnvironment en
         await db.SaveChangesAsync();
 
         return Ok();
+    }
+
+    /// <summary>
+    /// Aplica un cambio de estado bajo bloqueo de la fila de la ruta, para que dos peticiones concurrentes
+    /// sobre la misma entrega se serialicen y solo la primera emita evento. El cambio y el evento (outbox) van en una transaccion.
+    /// <paramref name="apply"/> devuelve un mensaje de conflicto, o null si aplico el cambio o no habia nada que hacer.
+    /// </summary>
+    private async Task<ActionResult<DeliveryStatusResponse>> TransitionAsync(Guid id, Func<Delivery, DateTimeOffset, string?> apply)
+    {
+        var delivery = await LoadOwnedDeliveryAsync(id);
+        if (delivery is null)
+        {
+            return Forbid();
+        }
+
+        await using var tx = await db.Database.BeginTransactionAsync();
+        var routeId = delivery.RouteId;
+        await db.Database.ExecuteSqlAsync($"""SELECT 1 FROM "Routes" WHERE "Id" = {routeId} FOR UPDATE""");
+        await db.Entry(delivery).ReloadAsync();
+        await db.Entry(delivery.Route!).ReloadAsync();
+
+        var conflict = apply(delivery, DateTimeOffset.UtcNow);
+        if (conflict is not null)
+        {
+            return Conflict(conflict);
+        }
+
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
+        return Ok(new DeliveryStatusResponse(delivery.Id, delivery.Status.ToString()));
     }
 
     private async Task<Delivery?> LoadOwnedDeliveryAsync(Guid deliveryId)
