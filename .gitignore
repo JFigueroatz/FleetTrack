@@ -39,6 +39,9 @@ ansible/inventory.ini
 reports/**/*
 !reports/**/.gitkeep
 
+# SonarQube (carpeta de trabajo del scanner)
+.sonarqube/
+
 # Cypress
 frontend/cypress/screenshots/
 frontend/cypress/downloads/
