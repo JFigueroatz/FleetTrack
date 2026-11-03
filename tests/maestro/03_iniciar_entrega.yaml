@@ -1,0 +1,6 @@
+appId: com.companyname.fleettrack.mobile
+---
+# Flujo 3/8: inicio de entrega. Toca "Iniciar" en la primera entrega pendiente de la lista.
+- runFlow: 02_consultar_ruta.yaml
+- tapOn: "Iniciar"
+- assertVisible: "Entrega iniciada."

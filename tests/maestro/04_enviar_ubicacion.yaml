@@ -1,0 +1,13 @@
+appId: com.companyname.fleettrack.mobile
+---
+# Flujo 4/8: ubicacion. Otorga el permiso de GPS al abrir y espera el primer envio automatico (cada 15s, ver RoutePage).
+- launchApp:
+    permissions:
+      location: allow
+- runFlow: 01_login.yaml
+- extendedWaitUntil:
+    notVisible: "No se pudo obtener la ubicacion"
+    timeout: 20000
+- extendedWaitUntil:
+    notVisible: "No se pudo enviar ubicacion"
+    timeout: 20000

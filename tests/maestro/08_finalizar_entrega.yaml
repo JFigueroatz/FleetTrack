@@ -1,0 +1,7 @@
+appId: com.companyname.fleettrack.mobile
+---
+# Flujo 8/8: finalizacion (camino feliz, con red). Inicia y finaliza una entrega y confirma el estado final en pantalla.
+- runFlow: 03_iniciar_entrega.yaml
+- tapOn: "Finalizar"
+- assertVisible: "Entrega finalizada."
+- assertVisible: "Completed"
