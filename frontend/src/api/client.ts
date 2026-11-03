@@ -9,7 +9,11 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
+  onResponse?: (response: Response) => void,
+): Promise<T> {
   const token = localStorage.getItem("fleettrack_token");
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -20,6 +24,8 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       ...options.headers,
     },
   });
+
+  onResponse?.(response);
 
   if (!response.ok) {
     const body = await response.text();
