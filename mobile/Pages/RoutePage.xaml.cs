@@ -13,6 +13,7 @@ public class DeliveryItem
 public partial class RoutePage : ContentPage
 {
     private readonly RouteService _routeService;
+    private readonly SyncService _sync;
     private readonly LocalDatabase _db;
     private readonly SessionState _session;
     private readonly ObservableCollection<DeliveryItem> _items = [];
@@ -20,10 +21,11 @@ public partial class RoutePage : ContentPage
     private Guid _driverId;
     private IDispatcherTimer? _locationTimer;
 
-    public RoutePage(RouteService routeService, LocalDatabase db, SessionState session)
+    public RoutePage(RouteService routeService, SyncService sync, LocalDatabase db, SessionState session)
     {
         InitializeComponent();
         _routeService = routeService;
+        _sync = sync;
         _db = db;
         _session = session;
         DeliveriesView.ItemsSource = _items;
@@ -32,6 +34,8 @@ public partial class RoutePage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        Connectivity.Current.ConnectivityChanged += OnConnectivityChanged;
+        await SyncAsync();
         await LoadRouteAsync();
         StartLocationReporting();
     }
@@ -39,7 +43,33 @@ public partial class RoutePage : ContentPage
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        Connectivity.Current.ConnectivityChanged -= OnConnectivityChanged;
         _locationTimer?.Stop();
+    }
+
+    private async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
+    {
+        if (e.NetworkAccess == NetworkAccess.Internet)
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await SyncAsync();
+                await LoadRouteAsync();
+            });
+        }
+    }
+
+    /// <summary>Reenvia la cola pendiente y refleja en pantalla cuantas operaciones faltan por confirmar.</summary>
+    private async Task SyncAsync()
+    {
+        var result = await _sync.FlushAsync();
+        PendingLabel.Text = result.Pending == 0
+            ? string.Empty
+            : $"Sin conexion: {result.Pending} operacion(es) pendiente(s) de sincronizar.";
+        if (result.Discarded > 0)
+        {
+            ErrorLabel.Text = $"{result.Discarded} operacion(es) fueron rechazadas por el servidor y se descartaron.";
+        }
     }
 
     private async Task LoadRouteAsync()
@@ -81,7 +111,10 @@ public partial class RoutePage : ContentPage
         }
         catch (Exception ex)
         {
-            ErrorLabel.Text = $"No se pudo cargar la ruta: {ex.Message}";
+            var cached = await _db.GetCachedRouteAsync();
+            ErrorLabel.Text = cached is null
+                ? $"No se pudo cargar la ruta: {ex.Message}"
+                : $"Sin conexion. Ultima ruta consultada ({cached.CachedAt.ToLocalTime():t}): {cached.Summary}";
         }
         finally
         {
@@ -93,11 +126,12 @@ public partial class RoutePage : ContentPage
     {
         _locationTimer = Dispatcher.CreateTimer();
         _locationTimer.Interval = TimeSpan.FromSeconds(15);
-        _locationTimer.Tick += async (_, _) => await SendCurrentLocationAsync();
+        _locationTimer.Tick += async (_, _) => await QueueCurrentLocationAsync();
         _locationTimer.Start();
     }
 
-    private async Task SendCurrentLocationAsync()
+    // La ubicacion se encola siempre (con su hora y EventId) y luego se intenta enviar todo: offline se acumulan, al reconectar salen en orden.
+    private async Task QueueCurrentLocationAsync()
     {
         try
         {
@@ -106,20 +140,27 @@ public partial class RoutePage : ContentPage
 
             if (location is not null)
             {
-                await _routeService.SendLocationAsync(location.Latitude, location.Longitude);
+                await _sync.EnqueueAsync(new PendingOperation
+                {
+                    Kind = OperationKind.Location,
+                    Latitude = location.Latitude,
+                    Longitude = location.Longitude
+                });
             }
         }
         catch (Exception ex)
         {
-            ErrorLabel.Text = $"No se pudo enviar ubicacion: {ex.Message}";
+            ErrorLabel.Text = $"No se pudo obtener la ubicacion: {ex.Message}";
         }
+
+        await SyncAsync();
     }
 
     private async void OnStartClicked(object? sender, EventArgs e)
     {
         if (sender is Button { CommandParameter: Guid deliveryId })
         {
-            await RunDeliveryActionAsync(() => _routeService.StartDeliveryAsync(deliveryId), "Entrega iniciada.");
+            await QueueDeliveryActionAsync(new PendingOperation { Kind = OperationKind.StartDelivery, DeliveryId = deliveryId }, "Entrega iniciada.");
         }
     }
 
@@ -127,8 +168,24 @@ public partial class RoutePage : ContentPage
     {
         if (sender is Button { CommandParameter: Guid deliveryId })
         {
-            await RunDeliveryActionAsync(() => _routeService.CompleteDeliveryAsync(deliveryId), "Entrega finalizada.");
+            await QueueDeliveryActionAsync(new PendingOperation { Kind = OperationKind.CompleteDelivery, DeliveryId = deliveryId }, "Entrega finalizada.");
         }
+    }
+
+    private async void OnFailClicked(object? sender, EventArgs e)
+    {
+        if (sender is not Button { CommandParameter: Guid deliveryId })
+        {
+            return;
+        }
+
+        var reason = await DisplayPromptAsync("Entrega fallida", "Motivo:");
+        if (reason is null)
+        {
+            return;
+        }
+        await QueueDeliveryActionAsync(
+            new PendingOperation { Kind = OperationKind.FailDelivery, DeliveryId = deliveryId, Reason = reason }, "Entrega marcada como fallida.");
     }
 
     private async void OnEvidenceClicked(object? sender, EventArgs e)
@@ -146,29 +203,30 @@ public partial class RoutePage : ContentPage
                 return;
             }
 
-            await using var stream = await photo.OpenReadAsync();
-            await _routeService.UploadEvidenceAsync(deliveryId, stream, "image/jpeg", photo.FileName);
-            MessageLabel.Text = "Evidencia subida.";
-            ErrorLabel.Text = string.Empty;
+            // La foto se copia al almacenamiento de la app para poder subirla mas tarde si no hay red.
+            var path = Path.Combine(FileSystem.AppDataDirectory, $"evidence-{Guid.NewGuid()}{Path.GetExtension(photo.FileName)}");
+            await using (var source = await photo.OpenReadAsync())
+            await using (var target = File.Create(path))
+            {
+                await source.CopyToAsync(target);
+            }
+
+            await QueueDeliveryActionAsync(
+                new PendingOperation { Kind = OperationKind.UploadEvidence, DeliveryId = deliveryId, FilePath = path, ContentType = "image/jpeg" },
+                "Evidencia guardada.");
         }
         catch (Exception ex)
         {
-            ErrorLabel.Text = $"No se pudo subir la evidencia: {ex.Message}";
+            ErrorLabel.Text = $"No se pudo guardar la evidencia: {ex.Message}";
         }
     }
 
-    private async Task RunDeliveryActionAsync(Func<Task> action, string successMessage)
+    private async Task QueueDeliveryActionAsync(PendingOperation operation, string message)
     {
         ErrorLabel.Text = string.Empty;
-        try
-        {
-            await action();
-            MessageLabel.Text = successMessage;
-            await LoadRouteAsync();
-        }
-        catch (Exception ex)
-        {
-            ErrorLabel.Text = $"No se pudo completar la accion: {ex.Message}";
-        }
+        await _sync.EnqueueAsync(operation);
+        MessageLabel.Text = message;
+        await SyncAsync();
+        await LoadRouteAsync();
     }
 }
