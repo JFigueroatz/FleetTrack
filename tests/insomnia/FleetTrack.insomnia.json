@@ -1,0 +1,181 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-03T00:00:00.000Z",
+  "__export_source": "fleettrack.manual",
+  "resources": [
+    {
+      "_id": "wrk_fleettrack",
+      "_type": "workspace",
+      "name": "FleetTrack API",
+      "description": "Coleccion de referencia: casos positivos, negativos y de autenticacion/autorizacion de la API."
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_fleettrack",
+      "name": "Local (docker-compose)",
+      "data": {
+        "baseUrl": "http://localhost:8080",
+        "supervisorEmail": "supervisor@fleettrack.test",
+        "supervisorPassword": "Supervisor123!",
+        "driverEmail": "conductor.prueba@fleettrack.test",
+        "driverPassword": "Conductor123!"
+      }
+    },
+
+    { "_id": "fld_auth", "_type": "request_group", "parentId": "wrk_fleettrack", "name": "Auth" },
+    {
+      "_id": "req_login_ok", "_type": "request", "parentId": "fld_auth", "name": "POST /api/auth/login — credenciales validas (200)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/auth/login",
+      "body": { "mimeType": "application/json", "text": "{\n  \"email\": \"{{ _.supervisorEmail }}\",\n  \"password\": \"{{ _.supervisorPassword }}\"\n}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "req_login_bad", "_type": "request", "parentId": "fld_auth", "name": "POST /api/auth/login — password incorrecto (401)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/auth/login",
+      "body": { "mimeType": "application/json", "text": "{\n  \"email\": \"{{ _.supervisorEmail }}\",\n  \"password\": \"incorrecta\"\n}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+
+    { "_id": "fld_drivers", "_type": "request_group", "parentId": "wrk_fleettrack", "name": "Drivers" },
+    {
+      "_id": "req_me_no_token", "_type": "request", "parentId": "fld_drivers", "name": "GET /api/drivers/me — sin token (401)",
+      "method": "GET", "url": "{{ _.baseUrl }}/api/drivers/me"
+    },
+    {
+      "_id": "req_me_wrong_role", "_type": "request", "parentId": "fld_drivers", "name": "GET /api/drivers/me — rol supervisor (403)",
+      "method": "GET", "url": "{{ _.baseUrl }}/api/drivers/me",
+      "authentication": { "type": "bearer", "token": "{{ _.supervisorToken }}" }
+    },
+    {
+      "_id": "req_me_ok", "_type": "request", "parentId": "fld_drivers", "name": "GET /api/drivers/me — rol conductor (200)",
+      "method": "GET", "url": "{{ _.baseUrl }}/api/drivers/me",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" }
+    },
+    {
+      "_id": "req_drivers_list", "_type": "request", "parentId": "fld_drivers", "name": "GET /api/drivers — supervisor (200)",
+      "method": "GET", "url": "{{ _.baseUrl }}/api/drivers",
+      "authentication": { "type": "bearer", "token": "{{ _.supervisorToken }}" }
+    },
+    {
+      "_id": "req_drivers_create", "_type": "request", "parentId": "fld_drivers", "name": "POST /api/drivers — crea conductor (201)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/drivers",
+      "authentication": { "type": "bearer", "token": "{{ _.supervisorToken }}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"fullName\": \"Conductor Insomnia\",\n  \"email\": \"insomnia.driver@fleettrack.test\",\n  \"phone\": \"0000-0000\",\n  \"licenseNumber\": \"LIC-INS-001\",\n  \"password\": \"Driver123!\"\n}" }
+    },
+
+    { "_id": "fld_catalog", "_type": "request_group", "parentId": "wrk_fleettrack", "name": "Clientes y vehiculos" },
+    {
+      "_id": "req_customers_list", "_type": "request", "parentId": "fld_catalog", "name": "GET /api/customers (200)",
+      "method": "GET", "url": "{{ _.baseUrl }}/api/customers",
+      "authentication": { "type": "bearer", "token": "{{ _.supervisorToken }}" }
+    },
+    {
+      "_id": "req_vehicle_create_dup", "_type": "request", "parentId": "fld_catalog", "name": "POST /api/vehicles — placa duplicada (400)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/vehicles",
+      "authentication": { "type": "bearer", "token": "{{ _.supervisorToken }}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"plate\": \"P-000TEST\",\n  \"model\": \"Duplicado\",\n  \"capacityKg\": 500\n}" }
+    },
+    {
+      "_id": "req_vehicle_create_forbidden", "_type": "request", "parentId": "fld_catalog", "name": "POST /api/vehicles — como conductor (403)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/vehicles",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"plate\": \"P-999NEW\",\n  \"model\": \"No autorizado\",\n  \"capacityKg\": 500\n}" }
+    },
+
+    { "_id": "fld_routes", "_type": "request_group", "parentId": "wrk_fleettrack", "name": "Rutas y entregas" },
+    {
+      "_id": "req_route_create", "_type": "request", "parentId": "fld_routes", "name": "POST /api/routes — asignar ruta (201)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/routes",
+      "authentication": { "type": "bearer", "token": "{{ _.supervisorToken }}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"driverId\": \"{{ _.driverId }}\",\n  \"vehicleId\": \"{{ _.vehicleId }}\",\n  \"deliveries\": [ { \"customerId\": \"{{ _.customerId }}\", \"sequence\": 1 } ]\n}" }
+    },
+    {
+      "_id": "req_route_create_empty", "_type": "request", "parentId": "fld_routes", "name": "POST /api/routes — sin entregas (400)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/routes",
+      "authentication": { "type": "bearer", "token": "{{ _.supervisorToken }}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"driverId\": \"{{ _.driverId }}\",\n  \"vehicleId\": \"{{ _.vehicleId }}\",\n  \"deliveries\": []\n}" }
+    },
+    {
+      "_id": "req_route_get_own", "_type": "request", "parentId": "fld_routes", "name": "GET /api/routes/{driverId} — propio conductor (200)",
+      "method": "GET", "url": "{{ _.baseUrl }}/api/routes/{{ _.driverId }}",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" }
+    },
+    {
+      "_id": "req_route_get_foreign", "_type": "request", "parentId": "fld_routes", "name": "GET /api/routes/{otroDriverId} — otro conductor (403)",
+      "method": "GET", "url": "{{ _.baseUrl }}/api/routes/00000000-0000-0000-0000-000000000000",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" }
+    },
+    {
+      "_id": "req_delivery_start", "_type": "request", "parentId": "fld_routes", "name": "POST /api/deliveries/{id}/start (200)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/deliveries/{{ _.deliveryId }}/start",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" }
+    },
+    {
+      "_id": "req_delivery_complete", "_type": "request", "parentId": "fld_routes", "name": "POST /api/deliveries/{id}/complete (200, idempotente)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/deliveries/{{ _.deliveryId }}/complete",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" }
+    },
+    {
+      "_id": "req_delivery_fail_after_complete", "_type": "request", "parentId": "fld_routes", "name": "POST /api/deliveries/{id}/complete tras fail (409)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/deliveries/{{ _.deliveryId }}/complete",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" }
+    },
+    {
+      "_id": "req_delivery_start_foreign", "_type": "request", "parentId": "fld_routes", "name": "POST /api/deliveries/{idAjeno}/start (403)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/deliveries/00000000-0000-0000-0000-000000000000/start",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" }
+    },
+    {
+      "_id": "req_evidence_upload", "_type": "request", "parentId": "fld_routes", "name": "POST /api/deliveries/{id}/evidence — JPEG valido (200)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/deliveries/{{ _.deliveryId }}/evidence",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" },
+      "body": { "mimeType": "multipart/form-data", "params": [ { "name": "file", "type": "file", "fileName": "evidencia.jpg" } ] }
+    },
+    {
+      "_id": "req_evidence_invalid_type", "_type": "request", "parentId": "fld_routes", "name": "POST /api/deliveries/{id}/evidence — tipo invalido (400)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/deliveries/{{ _.deliveryId }}/evidence",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" },
+      "body": { "mimeType": "multipart/form-data", "params": [ { "name": "file", "type": "file", "fileName": "documento.pdf" } ] }
+    },
+
+    { "_id": "fld_tracking", "_type": "request_group", "parentId": "wrk_fleettrack", "name": "Tracking" },
+    {
+      "_id": "req_tracking_post", "_type": "request", "parentId": "fld_tracking", "name": "POST /api/tracking — ubicacion valida (200)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/tracking",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"latitude\": 14.6349,\n  \"longitude\": -90.5069\n}" }
+    },
+    {
+      "_id": "req_tracking_post_invalid", "_type": "request", "parentId": "fld_tracking", "name": "POST /api/tracking — coordenadas fuera de rango (400)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/tracking",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"latitude\": 999,\n  \"longitude\": 0\n}" }
+    },
+    {
+      "_id": "req_tracking_post_dup", "_type": "request", "parentId": "fld_tracking", "name": "POST /api/tracking — mismo eventId reenviado (200, sin duplicar)",
+      "method": "POST", "url": "{{ _.baseUrl }}/api/tracking",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"latitude\": 14.6349,\n  \"longitude\": -90.5069,\n  \"eventId\": \"11111111-1111-1111-1111-111111111111\"\n}" }
+    },
+    {
+      "_id": "req_tracking_latest", "_type": "request", "parentId": "fld_tracking", "name": "GET /api/tracking/latest — supervisor (200)",
+      "method": "GET", "url": "{{ _.baseUrl }}/api/tracking/latest",
+      "authentication": { "type": "bearer", "token": "{{ _.supervisorToken }}" }
+    },
+    {
+      "_id": "req_tracking_latest_forbidden", "_type": "request", "parentId": "fld_tracking", "name": "GET /api/tracking/latest — conductor (403)",
+      "method": "GET", "url": "{{ _.baseUrl }}/api/tracking/latest",
+      "authentication": { "type": "bearer", "token": "{{ _.driverToken }}" }
+    }
+  ]
+}

@@ -101,4 +101,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Usado por el healthcheck de docker-compose y el reverse proxy; confirma que la API responde y llega a PostgreSQL.
+app.MapGet("/health", async (FleetTrackDbContext db) => await db.Database.CanConnectAsync() ? Results.Ok() : Results.StatusCode(503));
+
 app.Run();
