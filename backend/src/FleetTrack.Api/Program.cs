@@ -52,6 +52,11 @@ builder.Services
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<JwtTokenService>();
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+});
+
 const string WebClientCorsPolicy = "WebClient";
 builder.Services.AddCors(options =>
 {

@@ -8,6 +8,7 @@
 bin/
 obj/
 *.user
+backend/src/FleetTrack.Api/evidence/
 
 # Node
 node_modules/
