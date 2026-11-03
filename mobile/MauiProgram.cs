@@ -21,6 +21,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton(_ =>
 			new LocalDatabase(Path.Combine(FileSystem.AppDataDirectory, "fleettrack.db3")));
 		builder.Services.AddHttpClient<AuthService>();
+		builder.Services.AddHttpClient<RouteService>();
 
 		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<RoutePage>();
