@@ -1,9 +1,12 @@
 using FleetTrack.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace FleetTrack.Api.Persistence;
 
-public class FleetTrackDbContext(DbContextOptions<FleetTrackDbContext> options) : DbContext(options)
+public class FleetTrackDbContext(DbContextOptions<FleetTrackDbContext> options)
+    : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
@@ -15,12 +18,18 @@ public class FleetTrackDbContext(DbContextOptions<FleetTrackDbContext> options) 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Vehicle>()
             .HasIndex(v => v.Plate)
             .IsUnique();
 
         modelBuilder.Entity<Driver>()
             .HasIndex(d => d.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<Driver>()
+            .HasIndex(d => d.UserId)
             .IsUnique();
 
         modelBuilder.Entity<DeliveryRoute>()

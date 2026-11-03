@@ -18,4 +18,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FleetTrack.Api\FleetTrack.Api.csproj" />
+  </ItemGroup>
+
 </Project>
