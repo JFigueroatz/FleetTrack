@@ -1,0 +1,13 @@
+---
+# Playbook principal: deja una VM limpia de Ubuntu lista para correr FleetTrack con Docker Compose
+# detras de un reverse proxy. Idempotente: correrlo varias veces no duplica configuracion.
+- name: Configurar el host QA de FleetTrack
+  hosts: qa
+  become: true
+  vars:
+    fleettrack_dir: /opt/fleettrack
+
+  roles:
+    - docker
+    - fleettrack_app
+    - reverse_proxy
