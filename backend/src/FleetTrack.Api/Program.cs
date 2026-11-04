@@ -79,6 +79,14 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Headers que pidio ZAP (semana 6). same-origin no afecta al dashboard: llama a la API con CORS, y CORP solo aplica a peticiones no-cors.
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.XContentTypeOptions = "nosniff";
+    context.Response.Headers["Cross-Origin-Resource-Policy"] = "same-origin";
+    await next();
+});
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -104,4 +112,4 @@ app.MapControllers();
 // Usado por el healthcheck de docker-compose y el reverse proxy; confirma que la API responde y llega a PostgreSQL.
 app.MapGet("/health", async (FleetTrackDbContext db) => await db.Database.CanConnectAsync() ? Results.Ok() : Results.StatusCode(503));
 
-app.Run();
+await app.RunAsync();

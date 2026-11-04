@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.Security.Claims;
 using FleetTrack.Api.Persistence;
 using FleetTrack.Domain;
@@ -9,8 +10,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FleetTrack.Api.Controllers;
 
-public record CreateRouteDeliveryItem(Guid CustomerId, int Sequence);
-public record CreateRouteRequest(Guid DriverId, Guid VehicleId, List<CreateRouteDeliveryItem> Deliveries);
+public record CreateRouteDeliveryItem([property: JsonRequired] Guid CustomerId, [property: JsonRequired] int Sequence);
+public record CreateRouteRequest([property: JsonRequired] Guid DriverId, [property: JsonRequired] Guid VehicleId, List<CreateRouteDeliveryItem> Deliveries);
 
 public record DeliveryResponse(Guid Id, Guid CustomerId, string CustomerName, int Sequence, string Status);
 public record RouteResponse(Guid Id, Guid DriverId, string DriverName, Guid VehicleId, string Status, List<DeliveryResponse> Deliveries);

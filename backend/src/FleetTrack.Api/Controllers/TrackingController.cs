@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.Security.Claims;
 using System.Text.Json;
 using FleetTrack.Api.Persistence;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.Caching.Distributed;
 namespace FleetTrack.Api.Controllers;
 
 /// <summary>EventId y RecordedAt los envia el movil al reenviar ubicaciones acumuladas offline; sin EventId se genera uno.</summary>
-public record TrackingRequest(double Latitude, double Longitude, Guid? EventId = null, DateTimeOffset? RecordedAt = null);
+public record TrackingRequest([property: JsonRequired] double Latitude, [property: JsonRequired] double Longitude, Guid? EventId = null, DateTimeOffset? RecordedAt = null);
 public record LastPositionResponse(Guid DriverId, string DriverName, double Latitude, double Longitude, DateTimeOffset RecordedAt);
 
 [ApiController]
