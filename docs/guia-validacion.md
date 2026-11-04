@@ -64,7 +64,7 @@ Los reportes ya generados están en `reports/` (ZAP: abre los `.html`).
 
 ### 5.1 App Android (la más importante: nunca corrió fuera de compilación)
 
-Tu SDK (`C:\Users\jfigu\AppData\Local\Android\Sdk`) tiene `adb` pero **no tiene emulador ni imágenes**. Dos caminos:
+**Actualización:** el emulador ya está instalado (AVD `fleettrack`, Android 15) y la app se validó en él; los resultados y los comandos para repetirlo están en `docs/validacion-android-emulador.md`. Para abrirlo: `"C:/Users/jfigu/AppData/Local/Android/Sdk/emulator/emulator.exe" -avd fleettrack`. Lo que sigue describe cómo se llegó ahí o cómo hacerlo en otra máquina; originalmente el SDK solo tenía `adb`, sin emulador ni imágenes. Dos caminos:
 
 **A. Teléfono Android físico (el más rápido).** Activa Opciones de desarrollador → Depuración USB, conéctalo y comprueba `adb devices`. Un teléfono no alcanza `10.0.2.2` (alias solo del emulador): pon la IP de tu PC en `mobile/Services/AppConfig.cs` (`http://<IP-de-tu-PC>:8080`), agrégala también a `mobile/Platforms/Android/Resources/xml/network_security_config.xml`, y permite el puerto 8080 en el firewall de Windows. PC y teléfono deben estar en la misma red.
 
