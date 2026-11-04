@@ -33,6 +33,8 @@ sleep 3
 check "DeliveryFailed registrado" "$(event_count DeliveryFailed | awk '{print ($1>=1)}')" "1"
 
 echo "E2  Tracking: reenvio con EventId y ubicaciones fuera de orden"
+# Aislamiento: otras suites (integracion xUnit, k6) dejan posiciones recientes en Redis; el guard de orden las respetaria.
+docker compose exec -T redis redis-cli DEL "driver:$DRV:lastposition" > /dev/null
 E=$(new_uuid); base=$($PSQL "select count(*) from \"TrackingEvents\"")
 post /api/tracking "{\"latitude\":14.60,\"longitude\":-90.50,\"eventId\":\"$E\",\"recordedAt\":\"$(iso '-10 min')\"}" > /dev/null
 check "mismo EventId reenviado 3 veces -> 200" "$(post /api/tracking "{\"latitude\":14.60,\"longitude\":-90.50,\"eventId\":\"$E\"}")" "200"

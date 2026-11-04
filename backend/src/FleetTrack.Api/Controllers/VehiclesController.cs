@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FleetTrack.Api.Persistence;
 using FleetTrack.Domain;
 using FleetTrack.Domain.Entities;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FleetTrack.Api.Controllers;
 
-public record VehicleRequest(string Plate, string Model, int CapacityKg);
+public record VehicleRequest(string Plate, string Model, [property: JsonRequired] int CapacityKg);
 public record VehicleResponse(Guid Id, string Plate, string Model, int CapacityKg);
 
 [ApiController]

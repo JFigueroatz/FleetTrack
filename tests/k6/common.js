@@ -6,7 +6,7 @@ export const API = __ENV.API_URL || "http://localhost:8080";
 /** La API exige eventId como GUID valido; k6 no trae un generador de UUID nativo. */
 function uuidv4() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
+    const r = Math.trunc(Math.random() * 16); // NOSONAR: id de prueba de carga, no es un valor de seguridad
     return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
   });
 }
@@ -15,7 +15,8 @@ function uuidv4() {
 export function loginDriver() {
   const res = http.post(
     `${API}/api/auth/login`,
-    JSON.stringify({ email: "conductor.prueba@fleettrack.test", password: "Conductor123!" }),
+    // Usuario de prueba publico del seed (SeedData.cs); se puede sobreescribir con DRIVER_PASSWORD.
+    JSON.stringify({ email: "conductor.prueba@fleettrack.test", password: __ENV.DRIVER_PASSWORD || "Conductor123!" }), // NOSONAR
     { headers: { "Content-Type": "application/json" } },
   );
   check(res, { "login 200": (r) => r.status === 200 });

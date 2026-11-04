@@ -35,7 +35,7 @@ export function DashboardPage() {
       }
     }
 
-    load();
+    void load();
     const interval = setInterval(load, POLL_INTERVAL_MS);
     return () => {
       cancelled = true;

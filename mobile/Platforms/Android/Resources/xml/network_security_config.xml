@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 9+ bloquea HTTP sin cifrar. La API de desarrollo/QA corre sin TLS, asi que se permite solo hacia el
+     alias del emulador (10.0.2.2) y localhost. Para un telefono fisico agregar aqui la IP de la PC (y quitarlo antes de un release). -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>
