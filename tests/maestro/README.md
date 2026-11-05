@@ -3,25 +3,24 @@
 8 flujos que cubren login, ruta, inicio, ubicación, evidencia, desconexión, sincronización y finalización
 (sección 9 del plan de trabajo). Cada uno es independiente (`runFlow` encadena los pasos previos necesarios).
 
-## Estado de esta entrega (semana 5)
+## Estado: ejecutados (2026-11-05)
 
-Los flujos están escritos contra los textos reales de `mobile/Pages/RoutePage.xaml(.cs)` y `LoginPage.xaml(.cs)`,
-pero **no se ejecutaron**: esta máquina no tiene Maestro CLI instalado ni un emulador/dispositivo Android
-configurado (la app móvil nunca se probó en emulador — ver `docs/semana-4-mensajeria-y-recuperacion.md`, límites
-conocidos). Validarlos requiere:
+Los 8 flujos se ejecutaron con Maestro 2.12.1 contra el emulador Android 15 (AVD `fleettrack`) y la API real en Docker:
+**8/8 en verde**. Al correrlos por primera vez hubo que corregir los propios flujos (la app estaba bien):
+
+- **01**: el teclado en pantalla tapaba el botón "Ingresar" → `hideKeyboard` antes de tocarlo.
+- **05**: la cámara del sistema se abre sobre la app; faltaba disparar y confirmar (`shutter_button` y `done_button` de `com.android.camera2`).
+- **06/07**: los patrones de texto exigían terminar en "pendiente" pero la app dice "pendiente(s) de sincronizar." (Maestro compara el texto completo) → se añadió `.*`. En 07 el patrón viejo habría hecho pasar el "no visible" sin comprobar nada. Se añadió además una pausa de ~7 s para que el agente apague la red antes de "Finalizar".
+- **07/08**: el estado va dentro del texto de la fila ("1. Cliente de Prueba - Completed"), se verifica con `.*Completed`.
+
+Cómo correrlos (emulador abierto, app instalada, `docker compose up -d`):
 
 ```bash
-# 1. Instalar Maestro CLI (https://maestro.mobi)
-curl -Ls "https://get.maestro.mobi" | bash
-
-# 2. Tener un emulador Android corriendo con la app FleetTrack.Mobile instalada y la API accesible en 10.0.2.2:8080
-#    (docker compose up -d desde la raiz del repo)
-
-# 3. Ejecutar cada flujo
-maestro test tests/maestro/01_login.yaml
-# ...o la suite completa
-maestro test tests/maestro/
+MAESTRO=/ruta/a/maestro ADB=/ruta/a/adb bash tests/maestro/run-all.sh          # los 8
+bash tests/maestro/run-all.sh 06_desconexion                                    # uno
 ```
+
+`run-all.sh` crea una ruta de una entrega para cada flujo y, en 06/07, apaga la red del emulador (`adb shell svc`) justo después de "Iniciar"; en 07 la reactiva ~22 s después. Instalación de Maestro: https://maestro.mobi (requiere Java 17+).
 
 ## Limitación de selectores
 

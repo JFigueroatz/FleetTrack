@@ -7,6 +7,11 @@ appId: com.companyname.fleettrack.mobile
       camera: allow
 - runFlow: 03_iniciar_entrega.yaml
 - tapOn: "Evidencia"
+# La camara del sistema se abre sobre la app: hay que disparar y confirmar (ids de com.android.camera2 del emulador).
+- tapOn:
+    id: "com.android.camera2:id/shutter_button"
+- tapOn:
+    id: "com.android.camera2:id/done_button"
 - extendedWaitUntil:
     visible: "Evidencia guardada."
     timeout: 15000

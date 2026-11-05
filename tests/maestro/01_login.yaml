@@ -6,5 +6,6 @@ appId: com.companyname.fleettrack.mobile
 - inputText: "conductor.prueba@fleettrack.test"
 - tapOn: "Contrasena"
 - inputText: "Conductor123!"
+- hideKeyboard
 - tapOn: "Ingresar"
 - assertVisible: "Conductor de Prueba"

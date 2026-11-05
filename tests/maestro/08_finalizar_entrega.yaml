@@ -4,4 +4,5 @@ appId: com.companyname.fleettrack.mobile
 - runFlow: 03_iniciar_entrega.yaml
 - tapOn: "Finalizar"
 - assertVisible: "Entrega finalizada."
-- assertVisible: "Completed"
+# El estado va dentro del texto de la fila ("1. Cliente ... - Completed"), por eso el patron lleva ".*".
+- assertVisible: ".*Completed"

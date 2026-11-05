@@ -4,5 +4,9 @@ appId: com.companyname.fleettrack.mobile
 # emulador Android corre `adb shell svc wifi disable && adb shell svc data disable` antes de este paso
 # y los reactiva despues del flujo 07 (ver infrastructure/jenkins, pendiente). Aqui solo se valida la UI offline.
 - runFlow: 03_iniciar_entrega.yaml
+# Pausa (~7 s, por el timeout por defecto de una aserCion opcional) para que el agente apague la red antes de finalizar.
+- assertVisible:
+    text: "PAUSA-RED-OFF"
+    optional: true
 - tapOn: "Finalizar"
-- assertVisible: "Sin conexion.*operacion.*pendiente"
+- assertVisible: "Sin conexion.*operacion.*pendiente.*"

@@ -89,16 +89,15 @@ Antes, crea una ruta desde el dashboard web para `Conductor de Prueba` (paso 5 d
 5. Reactiva la red → en segundos el aviso desaparece y la entrega queda Completed **una sola vez** (comprueba con `select count(*) from "EventLogs" where "Type"='DeliveryCompleted'`).
 6. **Fallida** → pide motivo → la entrega queda Failed.
 
-Aviso honesto: la corrección de HTTP sin cifrar (Android 9+) se compiló pero no se pudo probar en ejecución; si el login falla con un error de "cleartext", es lo primero que hay que revisar.
+La corrección de HTTP sin cifrar (Android 9+) ya se probó en el emulador: el login funciona.
 
 ### 5.2 Maestro (8 flujos móviles)
 
-Necesita lo de 5.1 funcionando. Instala Maestro (https://maestro.mobi, requiere Java 17+; ya tienes JDK 21) y con el dispositivo/emulador conectado:
+Ejecutados: 8/8 en verde (ver `tests/maestro/README.md`). Con el emulador abierto, la app instalada y el stack arriba:
 ```bash
-maestro test tests/maestro/01_login.yaml      # un flujo
-maestro test tests/maestro/                   # los 8
+MAESTRO=<ruta a maestro> ADB=<ruta a adb> bash tests/maestro/run-all.sh     # los 8 (apaga y reactiva la red solos en 06/07)
 ```
-Los flujos 06 y 07 (desconexión/sincronización) necesitan que apagues y reactives la red a mano entre ellos (`adb shell svc wifi …`). Los flujos asumen una ruta de una sola entrega. Es probable que haya que ajustar algún texto o tiempo al correrlos por primera vez.
+Maestro se instala desde https://maestro.mobi (Java 17+).
 
 ### 5.3 Terraform (Azure)
 Sin crear nada: instala Terraform (`winget install Hashicorp.Terraform`) y valida solo la sintaxis:

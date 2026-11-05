@@ -29,7 +29,7 @@ demostrado en la app real, no solo simulado por API como en la semana 4.
    la cámara abre, toma la foto y la evidencia llega al servidor.
 3. **Mensaje engañoso.** Al finalizar sin red, la app decía "Entrega finalizada." en verde aunque la operación solo estaba
    encolada. Ahora el mensaje solo se confirma sin reservas si no queda nada pendiente; si quedó encolada dice
-   "… (guardada, se enviara al reconectar)". Este cambio compila pero **no se volvió a ver en pantalla**.
+   "… (guardada, se enviara al reconectar)". Verificado en pantalla (2026-11-05): "Entrega finalizada. (guardada, se enviara al reconectar)".
 
 ## Observaciones sin corregir
 
@@ -38,6 +38,12 @@ demostrado en la app real, no solo simulado por API como en la semana 4.
 - Con varias entregas, los botones se repiten por fila; los flujos Maestro asumen una sola entrega y habrá que
   seleccionar por fila.
 - El estado se muestra en inglés (`InProgress`, `Completed`, `Failed`) porque viene tal cual de la API.
+
+- Tras sincronizar, el mensaje verde "(guardada, se enviara al reconectar)" no se limpia aunque la entrega ya está `Completed` en el servidor; es solo cosmético, queda pendiente.
+
+## Maestro
+
+Los 8 flujos de `tests/maestro` pasan contra el emulador (detalle y correcciones a los flujos en `tests/maestro/README.md`).
 
 ## Cómo repetir la prueba
 
@@ -56,6 +62,5 @@ adb shell svc wifi enable;  adb shell svc data enable       # reconectar
 
 ## Pendiente
 
-- Ejecutar los 8 flujos Maestro (ya hay emulador; falta instalar Maestro CLI).
-- Volver a ver en pantalla el mensaje corregido del punto 3.
-- Probar en un teléfono físico (requiere la IP de la PC en `AppConfig.cs` y en la `network_security_config`).
+- Probar en un teléfono físico (requiere la IP de la PC en `AppConfig.cs` y la `network_security_config`).
+- Limpiar el mensaje de "guardada" tras sincronizar.
