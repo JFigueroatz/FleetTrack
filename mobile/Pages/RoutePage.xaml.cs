@@ -60,7 +60,7 @@ public partial class RoutePage : ContentPage
     }
 
     /// <summary>Reenvia la cola pendiente y refleja en pantalla cuantas operaciones faltan por confirmar.</summary>
-    private async Task SyncAsync()
+    private async Task<SyncResult> SyncAsync()
     {
         var result = await _sync.FlushAsync();
         PendingLabel.Text = result.Pending == 0
@@ -70,6 +70,7 @@ public partial class RoutePage : ContentPage
         {
             ErrorLabel.Text = $"{result.Discarded} operacion(es) fueron rechazadas por el servidor y se descartaron.";
         }
+        return result;
     }
 
     private async Task LoadRouteAsync()
@@ -225,8 +226,9 @@ public partial class RoutePage : ContentPage
     {
         ErrorLabel.Text = string.Empty;
         await _sync.EnqueueAsync(operation);
-        MessageLabel.Text = message;
-        await SyncAsync();
+        var result = await SyncAsync();
+        // Solo se confirma al conductor lo que el servidor ya recibio; si quedo encolada se lo decimos.
+        MessageLabel.Text = result.Pending == 0 ? message : $"{message} (guardada, se enviara al reconectar)";
         await LoadRouteAsync();
     }
 }

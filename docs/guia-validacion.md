@@ -64,7 +64,7 @@ Los reportes ya generados están en `reports/` (ZAP: abre los `.html`).
 
 ### 5.1 App Android (la más importante: nunca corrió fuera de compilación)
 
-Tu SDK (`C:\Users\jfigu\AppData\Local\Android\Sdk`) tiene `adb` pero **no tiene emulador ni imágenes**. Dos caminos:
+**Actualización:** el emulador ya está instalado (AVD `fleettrack`, Android 15) y la app se validó en él; los resultados y los comandos para repetirlo están en `docs/validacion-android-emulador.md`. Para abrirlo: `"C:/Users/jfigu/AppData/Local/Android/Sdk/emulator/emulator.exe" -avd fleettrack`. Lo que sigue describe cómo se llegó ahí o cómo hacerlo en otra máquina; originalmente el SDK solo tenía `adb`, sin emulador ni imágenes. Dos caminos:
 
 **A. Teléfono Android físico (el más rápido).** Activa Opciones de desarrollador → Depuración USB, conéctalo y comprueba `adb devices`. Un teléfono no alcanza `10.0.2.2` (alias solo del emulador): pon la IP de tu PC en `mobile/Services/AppConfig.cs` (`http://<IP-de-tu-PC>:8080`), agrégala también a `mobile/Platforms/Android/Resources/xml/network_security_config.xml`, y permite el puerto 8080 en el firewall de Windows. PC y teléfono deben estar en la misma red.
 
@@ -89,16 +89,15 @@ Antes, crea una ruta desde el dashboard web para `Conductor de Prueba` (paso 5 d
 5. Reactiva la red → en segundos el aviso desaparece y la entrega queda Completed **una sola vez** (comprueba con `select count(*) from "EventLogs" where "Type"='DeliveryCompleted'`).
 6. **Fallida** → pide motivo → la entrega queda Failed.
 
-Aviso honesto: la corrección de HTTP sin cifrar (Android 9+) se compiló pero no se pudo probar en ejecución; si el login falla con un error de "cleartext", es lo primero que hay que revisar.
+La corrección de HTTP sin cifrar (Android 9+) ya se probó en el emulador: el login funciona.
 
 ### 5.2 Maestro (8 flujos móviles)
 
-Necesita lo de 5.1 funcionando. Instala Maestro (https://maestro.mobi, requiere Java 17+; ya tienes JDK 21) y con el dispositivo/emulador conectado:
+Ejecutados: 8/8 en verde (ver `tests/maestro/README.md`). Con el emulador abierto, la app instalada y el stack arriba:
 ```bash
-maestro test tests/maestro/01_login.yaml      # un flujo
-maestro test tests/maestro/                   # los 8
+MAESTRO=<ruta a maestro> ADB=<ruta a adb> bash tests/maestro/run-all.sh     # los 8 (apaga y reactiva la red solos en 06/07)
 ```
-Los flujos 06 y 07 (desconexión/sincronización) necesitan que apagues y reactives la red a mano entre ellos (`adb shell svc wifi …`). Los flujos asumen una ruta de una sola entrega. Es probable que haya que ajustar algún texto o tiempo al correrlos por primera vez.
+Maestro se instala desde https://maestro.mobi (Java 17+).
 
 ### 5.3 Terraform (Azure)
 Sin crear nada: instala Terraform (`winget install Hashicorp.Terraform`) y valida solo la sintaxis:
