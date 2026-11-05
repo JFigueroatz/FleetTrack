@@ -6,6 +6,8 @@ M="${MAESTRO:-maestro}"
 ADB="${ADB:-adb}"
 cd "$(dirname "$0")/../.."
 source tests/recovery/common.sh
+# Un emulador con la pantalla apagada hace fallar todos los flujos: enciende y mantiene encendida la pantalla.
+"$ADB" shell input keyevent KEYCODE_WAKEUP; "$ADB" shell svc power stayon true
 
 run() { # $1 flujo, $2 = offline-helper (none|off|offon)
   local f=$1 mode=${2:-none} did

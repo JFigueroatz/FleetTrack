@@ -135,4 +135,4 @@ Importa `tests/insomnia/FleetTrack.insomnia.json` (Application → Import). La c
 Sigue `docs/usabilidad/protocolo-usabilidad.md` con 5 personas y anota en `docs/usabilidad/plantilla-resultados.csv`.
 
 ### 5.9 Jenkins
-El `Jenkinsfile` aún no existe (semana 8).
+El `Jenkinsfile` de la raíz define el pipeline completo (checkout → … → aprobación de Alejandro → despliegue final). Su sintaxis Groovy se verificó, pero **no se ejecutó en un servidor Jenkins**: hay que montar Jenkins con un agente `qa` (Docker, .NET 10, Node 24, k6, Semgrep, Terraform, Ansible) y otro `android` (SDK, emulador, Maestro), y crear las credenciales `sonar-token`, `nvd-api-key`, `fleettrack-qa-env` (archivo `.env`) y `fleettrack-ansible-extra-vars`. Los pasos de cobertura y Quality Gate sí se ejecutaron a mano: `bash tests/coverage/run-coverage.sh` y `bash tests/coverage/sonar-scan.sh <version>`.

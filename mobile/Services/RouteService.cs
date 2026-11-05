@@ -15,7 +15,7 @@ public class RouteService(HttpClient httpClient, SessionState session)
     public async Task<DriverProfile> GetMyProfileAsync()
     {
         AttachToken();
-        var response = await httpClient.GetAsync($"{AppConfig.ApiBaseUrl}/api/drivers/me");
+        var response = await httpClient.GetAsync($"{AppConfig.ApiBaseUrl}/api/drivers/me"); // NOSONAR S5332: ver AppConfig
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<DriverProfile>()
             ?? throw new InvalidOperationException("Perfil de conductor invalido.");
@@ -69,7 +69,7 @@ public class RouteService(HttpClient httpClient, SessionState session)
     public async Task SendLocationAsync(double latitude, double longitude, Guid eventId, DateTimeOffset recordedAt)
     {
         AttachToken();
-        var response = await httpClient.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/api/tracking", new { latitude, longitude, eventId, recordedAt });
+        var response = await httpClient.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/api/tracking", new { latitude, longitude, eventId, recordedAt }); // NOSONAR S5332: ver AppConfig
         response.EnsureSuccessStatusCode();
     }
 }

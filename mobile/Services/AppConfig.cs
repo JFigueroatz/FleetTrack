@@ -8,5 +8,5 @@ public static class AppConfig
     /// real del servidor (shortcut: valor fijo, mover a appsettings/MAUI config si
     /// se necesitan varios ambientes).
     /// </summary>
-    public const string ApiBaseUrl = "http://10.0.2.2:8080";
+    public const string ApiBaseUrl = "http://10.0.2.2:8080"; // NOSONAR S5332: HTTP solo hacia el emulador (10.0.2.2); la network_security_config no permite cleartext a otro host.
 }
