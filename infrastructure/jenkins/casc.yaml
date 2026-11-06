@@ -1,0 +1,61 @@
+# Jenkins as code (plugin Configuration as Code). Todos los valores salen de variables de entorno que
+# start-jenkins.sh define; nada secreto vive en este archivo.
+jenkins:
+  systemMessage: "FleetTrack QA - Jenkins local (controlador + agentes 'qa' y 'android' en este equipo)"
+  numExecutors: 2
+  labelString: "qa android"
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "alejandro"                      # unico autorizado a aprobar el despliegue final (input submitter)
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+unclassified:
+  location:
+    url: "http://localhost:8081/"
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              scope: GLOBAL
+              id: "sonar-token"
+              secret: "${SONAR_TOKEN}"
+              description: "Token de SonarQube local"
+          - string:
+              scope: GLOBAL
+              id: "nvd-api-key"
+              secret: "${NVD_API_KEY:-SIN-CLAVE-DE-NVD}"
+              description: "Clave de la API de NVD para Dependency-Check (sin clave el analisis falla a proposito)"
+          - file:
+              scope: GLOBAL
+              id: "fleettrack-qa-env"
+              fileName: ".env"
+              secretBytes: "${base64:${readFile:${QA_ENV_PATH}}}"
+              description: ".env del ambiente QA (POSTGRES_*, RABBITMQ_*, JWT_SECRET)"
+          - file:
+              scope: GLOBAL
+              id: "fleettrack-ansible-extra-vars"
+              fileName: "extra-vars.json"
+              secretBytes: "${base64:${readFile:${ANSIBLE_EXTRA_PATH}}}"
+              description: "Variables del despliegue final (solo se usan con DEPLOY_FINAL en main)"
+jobs:
+  - script: >
+      pipelineJob('fleettrack') {
+        description('Pipeline de FleetTrack: ver Jenkinsfile en la raiz del repositorio.')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote { url('${REPO_URL}') }
+                branch('${REPO_BRANCH:-*/main}')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(false)
+          }
+        }
+      }
