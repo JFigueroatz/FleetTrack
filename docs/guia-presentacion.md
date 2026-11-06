@@ -31,7 +31,7 @@ Antes de abrir la sesión: crea una ruta para el conductor de prueba (dashboard 
 |---|---|---|---|---|
 | 1 | 4 min | Problema, arquitectura y riesgos | Alejandro | FleetTrack: logística de rutas, tracking y entregas. Supervisor en el dashboard, conductor en Android con modo sin conexión. Muestra el diagrama de `arquitectura.pdf` (dashboard y app → API .NET → PostgreSQL + outbox → RabbitMQ → consumidor idempotente, Redis como caché). Explica los 3 riesgos mayores: operación duplicada, pérdida de operaciones y caída de Redis/broker. Abre `matriz-riesgos.xlsx` (14 riesgos con probabilidad × impacto). |
 | 2 | 3 min | Cloud, IaC y Ansible | Alejandro y Manuel | Terraform (Azure): VM, red, identidad administrada, IP pública aceptada con justificación. Ansible: Docker, despliegue y nginx como reverse proxy. **Di con claridad** que se validaron `terraform validate` y `ansible --syntax-check` (corren dentro del pipeline) y que el `apply` real no se hizo porque Azure for Students no está confirmado. El ambiente reproducible se demuestra con Docker Compose. |
-| 3 | 5 min | Pipeline Jenkins y Quality Gates | Alejandro | Abre el build #11: 20 etapas en verde, en el orden del plan. Muestra que la etapa de criterios de salida bloquea si falta un reporte obligatorio y que la aprobación final solo la autoriza Alejandro (`input` con `submitter: alejandro`). SonarQube: Quality Gate OK, 0 bugs, 0 vulnerabilidades, cobertura del backend 82,1 %. |
+| 3 | 5 min | Pipeline Jenkins y Quality Gates | Alejandro | Abre el build #12: todas las etapas en verde, en el orden del plan. Muestra que la etapa de criterios de salida bloquea si falta un reporte obligatorio y que la aprobación final solo la autoriza Alejandro (`input` con `submitter: alejandro`). SonarQube: Quality Gate OK, 0 bugs, 0 vulnerabilidades, cobertura del backend 82,1 %. |
 | 4 | 3 min | API, Redis y RabbitMQ | Andrea | Outbox transaccional, idempotencia en tres niveles (bloqueo de fila, `eventId`, `MessageId`), 3 reintentos y cola de fallidos. Muestra las colas en RabbitMQ. Menciona la colección de Insomnia y las 22 pruebas de integración. |
 | 5 | 4 min | Automatización: Cypress, Maestro y seguridad | Manuel y Andrea | Cypress 15/15 (incluye accesibilidad con axe), Maestro 8/8 sobre el emulador, ZAP (0 FAIL, 3 avisos informativos aceptados), Semgrep 0 hallazgos, npm audit y NuGet 0 vulnerabilidades, Dependency-Check. |
 | 6 | 3 min | Rendimiento, usabilidad y resultados | Andrea y Manuel | k6 a escala completa: load 100 usuarios/10 min p95 20 ms; stress a 300 usuarios p95 23 ms; spike p95 29,7 ms; umbral p95 < 500 ms y errores < 1 %. 48 000 eventos sin pérdida ni duplicados. Usabilidad: resultados de las 5 personas. |
@@ -66,7 +66,7 @@ Cifras totales: **77 pruebas automatizadas en verde** (6 unitarias, 22 integraci
 | GitHub: ramas, PR, Issues y versionamiento | 1,0 | Ramas por persona, 17 PR con autoevaluación, historial con identidades distintas, `main` protegida | Falta el tag `v0.9.0-rc1`; se trabajó con PR en vez de Issues (dilo) |
 | Cloud + IaC | 2,5 | `infrastructure/terraform`, `terraform validate` dentro del pipeline | Parcial: sin `apply` (Azure sin confirmar) |
 | Docker + Ansible + reproducibilidad | 2,0 | `docker compose up -d --wait` con healthchecks, contenedores sin privilegios, roles de Ansible | Docker completo; Ansible validado en sintaxis, sin ejecutar en un host |
-| Jenkins CI/CD + Quality Gates | 2,0 | Build #11, `Jenkinsfile`, JCasC, Quality Gate de Sonar | Completo (falta que Dependency-Check lo deje en verde) |
+| Jenkins CI/CD + Quality Gates | 2,0 | Build #12 en verde, `Jenkinsfile`, JCasC, Quality Gate de Sonar | Completo (build #12 en verde de punta a punta) |
 | SonarQube + Fortify + Dependency-Check + npm audit | 2,5 | Sonar OK; Semgrep como sustituto de Fortify; Dependency-Check ejecutado; npm audit 0 | Fortify sustituido (pedir excepción al docente); Dependency-Check con 1 falso positivo documentado |
 | API + Insomnia + Redis + RabbitMQ | 2,0 | 22 pruebas de integración, colección Insomnia, experimentos E4 a E6 | Completo |
 | Cypress | 1,5 | 15 pruebas en `frontend/cypress` | Completo |
@@ -80,7 +80,7 @@ Cifras totales: **77 pruebas automatizadas en verde** (6 unitarias, 22 integraci
 ## 4. Defensa práctica: qué te pueden pedir y cómo hacerlo
 
 ### 4.1 «Ejecuta un pipeline»
-Un build completo dura unos 25 minutos. Lánzalo antes de empezar o al inicio de la exposición y narra las etapas mientras avanzan; muestra el build #11 ya terminado como respaldo.
+Un build completo dura unos 25 minutos. Lánzalo antes de empezar o al inicio de la exposición y narra las etapas mientras avanzan; muestra el build #12 ya terminado como respaldo.
 En Jenkins: job `fleettrack` → **Build Now** (o, si pide parámetros, Build with Parameters). Explica: checkout, dependencias, lint, unitarias, SonarQube con cobertura, npm audit, Dependency-Check, SAST, build de imágenes, despliegue QA, API, Cypress, recuperación, Maestro, ZAP, rendimiento, criterios de salida y aprobación.
 
 ### 4.2 «Provoca una prueba fallida»

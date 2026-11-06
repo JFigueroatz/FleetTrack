@@ -196,7 +196,7 @@ for i, (cid, d, p, res, ev, df) in enumerate([
     ("CT-INF-02", "Ansible syntax-check (contenedor python + ansible-core)", "RNF-07", "Aprobado", "Jenkins build #11, etapa Lint y validaciones", ""),
     ("CT-INF-03", "Terraform apply y Ansible contra Azure", "RNF-07", "Pendiente", "Requiere suscripción confirmada", ""),
     ("CT-INF-04", "docker compose up: 6 servicios sanos y reinicio automático", "RNF-07", "Aprobado", "docker compose ps", ""),
-    ("CT-PIP-01", "Pipeline Jenkins de punta a punta: build #11 con 20 de 21 etapas en verde (Dependency-Check aún sin clave); build con la clave: ver informe final", "RNF-07", "Aprobado", "Jenkins (infrastructure/jenkins)", ""),
+    ("CT-PIP-01", "Pipeline Jenkins de punta a punta: build #12 en verde (21 min). El build #11, sin clave de NVD, se detuvo en los criterios de salida", "RNF-07", "Aprobado", "Jenkins build #12 (infrastructure/jenkins)", ""),
 ]):
     add(cid, p, d, "No funcional", "", "PR #14, #15" if cid.startswith(("CT-SEG", "CT-PER", "CT-CAL")) else "", res, ev, df)
 # el campo Prueba de los no funcionales queda con la herramienta
