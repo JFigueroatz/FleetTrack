@@ -85,6 +85,7 @@ Limitaciones honestas: todos los usuarios virtuales reportan como el mismo condu
 | D-13 | Semgrep local bloqueado por el Control de aplicaciones de Windows | Media | Corregido: corre en su imagen oficial de Docker |
 | D-14 | Experimento E4 usaba archivos temporales que fallaban bajo Jenkins en Windows | Media | Corregido: captura en variable |
 | D-15 | Script de cobertura no compilaba las pruebas de integración en un workspace limpio | Media | Corregido |
+| D-18 | La app seguía reportando ubicación después de finalizar la entrega, y el dashboard mostraba al conductor «En vivo» | Media | Corregido: solo reporta mientras hay una entrega en curso |
 | D-17 | Rediseño de la interfaz: axe halló contraste insuficiente en tema oscuro (4,09:1) y una animación que bajaba la opacidad del texto | Media | Corregido (5,86:1; animación solo de desplazamiento) |
 
 Ningún defecto crítico o alto sigue abierto.

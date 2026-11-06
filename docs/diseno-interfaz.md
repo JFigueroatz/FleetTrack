@@ -26,7 +26,7 @@ Estados de entrega: *Pending* gris, *InProgress* ámbar, *Completed* verde, *Fai
 
 Web: indicador de conexión y «Actualizado hace N s», resalte de la fila cuando llega una posición nueva, búsqueda en las listas de clientes, vehículos y conductores, contador de registros, aviso de éxito que se retira solo, la lista muestra primero lo último que agregaste y movimiento sutil al entrar a cada pantalla (solo desplazamiento; respeta «reducir movimiento»).
 
-Móvil: deslizar hacia abajo para actualizar (reenvía lo pendiente y vuelve a consultar la ruta), avisos que aparecen solo cuando tienen texto y se limpian solos, y estado de cada entrega con su color.
+Móvil: la ubicación solo se reporta mientras hay una entrega en curso (al finalizar, el dashboard pasa al conductor a *Reciente* y luego a *Inactivo*), deslizar hacia abajo para actualizar (reenvía lo pendiente y vuelve a consultar la ruta), avisos que aparecen solo cuando tienen texto y se limpian solos, y estado de cada entrega con su color.
 
 ## Accesibilidad
 
@@ -39,6 +39,10 @@ Hallazgos de axe durante el rediseño, ya corregidos: en tema oscuro el botón p
 ## Lo que no cambió, a propósito
 
 Los textos, IDs y botones que usan las pruebas se conservaron: etiquetas de los formularios, nombres del menú, mensajes de error y de éxito, y en el móvil «Correo», «Contrasena», «Ingresar», «Iniciar», «Evidencia», «Finalizar», «Fallida» y los avisos. Por eso las 15 pruebas de Cypress y los 8 flujos de Maestro siguen pasando.
+
+## Qué significa «En vivo»
+
+En el dashboard, *En vivo* quiere decir que el teléfono reportó su ubicación hace menos de un minuto. Como la app solo reporta con una entrega en curso, en la práctica equivale a «está haciendo una entrega»; si la app queda abierta sin entrega activa deja de reportar y el estado baja solo.
 
 ## Limitaciones conocidas
 

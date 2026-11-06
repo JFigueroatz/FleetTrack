@@ -177,6 +177,12 @@ public partial class RoutePage : ContentPage
     // La ubicacion se encola siempre (con su hora y EventId) y luego se intenta enviar todo: offline se acumulan, al reconectar salen en orden.
     private async Task QueueCurrentLocationAsync()
     {
+        // Solo se reporta mientras hay una entrega en curso: al finalizarla, el dashboard deja de verla "en vivo".
+        if (!_items.Any(i => i.Status == "InProgress"))
+        {
+            return;
+        }
+
         try
         {
             var location = await Geolocation.Default.GetLocationAsync(
