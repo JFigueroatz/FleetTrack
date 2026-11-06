@@ -64,6 +64,7 @@ pipeline {
           for f in tests/recovery/*.sh tests/maestro/*.sh tests/coverage/*.sh; do bash -n "$f"; done
           MSYS_NO_PATHCONV=1 docker run --rm -v "$WS/infrastructure/terraform:/w" -w /w hashicorp/terraform:1.9 init -backend=false -input=false
           MSYS_NO_PATHCONV=1 docker run --rm -v "$WS/infrastructure/terraform:/w" -w /w hashicorp/terraform:1.9 validate
+          MSYS_NO_PATHCONV=1 docker run --rm -v "$WS/infrastructure/terraform:/w" -w /w hashicorp/terraform:1.9 fmt -check
           MSYS_NO_PATHCONV=1 docker run --rm -v "$WS:/w" -w /w python:3.12-slim sh -c "pip install -q ansible-core && ansible-playbook --syntax-check -i ansible/inventory.example.ini ansible/site.yml"
         '''
       }

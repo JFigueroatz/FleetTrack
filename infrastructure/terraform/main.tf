@@ -85,23 +85,23 @@ resource "azurerm_network_interface" "main" {
     subnet_id                     = azurerm_subnet.main.id
     private_ip_address_allocation = "Dynamic"
     # Decision aceptada (semana 7): el ambiente QA debe ser alcanzable desde Internet; el NSG limita SSH a allowed_ssh_cidr.
-    public_ip_address_id          = azurerm_public_ip.main.id # NOSONAR
+    public_ip_address_id = azurerm_public_ip.main.id # NOSONAR
   }
 }
 
 resource "azurerm_network_interface_security_group_association" "main" {
-  network_interface_id     = azurerm_network_interface.main.id
+  network_interface_id      = azurerm_network_interface.main.id
   network_security_group_id = azurerm_network_security_group.main.id
 }
 
 resource "azurerm_linux_virtual_machine" "main" {
-  name                = "${local.name_prefix}-vm"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  size                = var.vm_size
-  admin_username      = var.admin_username
+  name                  = "${local.name_prefix}-vm"
+  location              = azurerm_resource_group.main.location
+  resource_group_name   = azurerm_resource_group.main.name
+  size                  = var.vm_size
+  admin_username        = var.admin_username
   network_interface_ids = [azurerm_network_interface.main.id]
-  tags                = local.tags
+  tags                  = local.tags
 
   # Identidad administrada: la VM podra autenticarse contra servicios de Azure sin guardar credenciales (hallazgo Sonar S6382).
   identity {

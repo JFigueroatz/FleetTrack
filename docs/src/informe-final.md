@@ -109,7 +109,7 @@ Ningún defecto crítico o alto sigue abierto.
 | Reportes obligatorios presentes | **Cumple** (Dependency-Check ejecutado el 2026-11-06) |
 | p95 < 500 ms y errores < 1 % a escala completa | **Cumple** (p95 20 / 23 / 29,7 ms; 0,008 % de errores en load) |
 | Usabilidad ≥ 80 % con 5 participantes | **No demostrado**: sin participantes |
-| Pipeline de Jenkins ejecutado con el reporte de Quality Gate | **Cumple parcialmente**: build #11 con 20 de 21 etapas en verde (incluye Maestro, ZAP y Quality Gate OK); con el reporte de Dependency-Check la etapa de criterios de salida deja de bloquear (se reejecuta el build para confirmarlo) |
+| Pipeline de Jenkins ejecutado con el reporte de Quality Gate | **Cumple**: build #12 en verde de punta a punta (21 minutos; incluye Dependency-Check con clave de NVD, Maestro 8/8, ZAP, k6 y Quality Gate OK). El build #11, sin la clave, se detuvo en los criterios de salida, como debe. El despliegue final solo corre en `main` con la aprobación de Alejandro |
 | Autorización explícita de Alejandro en Jenkins | Pendiente |
 
 **Decisión recomendada: NO-GO provisional**, a falta de dos cierres, ambos de personas:
