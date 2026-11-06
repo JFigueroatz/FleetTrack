@@ -167,8 +167,8 @@ pipeline {
           mkdir -p reports/maestro
           bash tests/maestro/ensure-emulator.sh
           dotnet build mobile -f net10.0-android -t:Install -p:AndroidSdkDirectory="$ANDROID_HOME"
-          adb shell pm grant com.companyname.fleettrack.mobile android.permission.ACCESS_FINE_LOCATION
-          adb shell pm grant com.companyname.fleettrack.mobile android.permission.CAMERA
+          "$ADB" shell pm grant com.companyname.fleettrack.mobile android.permission.ACCESS_FINE_LOCATION
+          "$ADB" shell pm grant com.companyname.fleettrack.mobile android.permission.CAMERA
           bash tests/maestro/run-all.sh | tee reports/maestro/maestro.txt
           ! grep -q "exit=[1-9]" reports/maestro/maestro.txt
         '''
