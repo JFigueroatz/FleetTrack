@@ -56,3 +56,6 @@ Thumbs.db
 
 # Fotos de evidencia generadas al correr la API en el host (cobertura)
 /evidence/
+
+# Copias personales con contraseñas (nunca versionar)
+docs/local/

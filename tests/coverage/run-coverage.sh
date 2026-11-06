@@ -30,6 +30,8 @@ dotnet-coverage collect -f xml -o $OUT/unit.xml "dotnet test backend/tests/Fleet
 
 dotnet build backend/src/FleetTrack.Api -c Debug -v q -p:UseSharedCompilation=false
 dotnet build backend/src/FleetTrack.Consumer -c Debug -v q -p:UseSharedCompilation=false
+# En un espacio de trabajo limpio (Jenkins) las pruebas de integracion no estan compiladas todavia.
+dotnet build backend/tests/FleetTrack.Api.IntegrationTests -c Debug -v q -p:UseSharedCompilation=false
 
 echo "== 2) integracion (API + consumidor en el host)"
 docker compose stop api consumer

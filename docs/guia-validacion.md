@@ -128,6 +128,8 @@ k6 run tests/k6/spike.js    # ~3 min, salto a 300 VUs
 ```
 Cierra otras aplicaciones pesadas antes: la máquina es también quien genera la carga, y eso distorsiona el resultado.
 
+**Ya ejecutado (2026-11-06):** load p95 20 ms, stress a 300 VUs p95 23 ms, spike p95 29,7 ms, sin pérdida ni duplicados (informe final, sección 5).
+
 ### 5.7 Insomnia
 Importa `tests/insomnia/FleetTrack.insomnia.json` (Application → Import). La colección usa variables que debes llenar a mano en el entorno "Local": `supervisorToken` y `driverToken` (cópialos de la respuesta de las peticiones de login), y `driverId`, `vehicleId`, `customerId`, `deliveryId` (de `GET /api/drivers`, `/vehicles`, `/customers` y de la respuesta de `POST /api/routes`). Las peticiones de evidencia necesitan elegir un archivo de imagen al enviarlas.
 
@@ -135,4 +137,4 @@ Importa `tests/insomnia/FleetTrack.insomnia.json` (Application → Import). La c
 Sigue `docs/usabilidad/protocolo-usabilidad.md` con 5 personas y anota en `docs/usabilidad/plantilla-resultados.csv`.
 
 ### 5.9 Jenkins
-El `Jenkinsfile` de la raíz define el pipeline completo (checkout → … → aprobación de Alejandro → despliegue final). Su sintaxis Groovy se verificó, pero **no se ejecutó en un servidor Jenkins**: hay que montar Jenkins con un agente `qa` (Docker, .NET 10, Node 24, k6, Semgrep, Terraform, Ansible) y otro `android` (SDK, emulador, Maestro), y crear las credenciales `sonar-token`, `nvd-api-key`, `fleettrack-qa-env` (archivo `.env`) y `fleettrack-ansible-extra-vars`. Los pasos de cobertura y Quality Gate sí se ejecutaron a mano: `bash tests/coverage/run-coverage.sh` y `bash tests/coverage/sonar-scan.sh <version>`.
+El `Jenkinsfile` de la raíz define el pipeline completo y **ya se ejecutó en un Jenkins local**: `bash infrastructure/jenkins/start-jenkins.sh` (instrucciones y credenciales en `docs/guia-cierre-evidencias.md`). El build #11 pasó 20 de 21 etapas; la etapa de criterios de salida lo bloquea por falta del reporte de Dependency-Check (necesita la clave de NVD). Sin esa clave el pipeline no puede quedar en verde.
