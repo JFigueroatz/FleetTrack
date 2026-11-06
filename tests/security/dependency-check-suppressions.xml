@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Supresiones de OWASP Dependency-Check. Cada una lleva su justificación, el análisis que la respalda y una fecha
+     de caducidad (until) para que se revise. Aprobación pendiente de Alejandro (único aprobador del proyecto).
+     El reporte sin supresiones se conserva en reports/dependency-check/*-sin-supresion.* -->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+  <suppress until="2027-01-31Z">
+    <notes><![CDATA[
+      Falso positivo por confusión de CPE. sqlite-net-pcl es un envoltorio ORM de C# (versión 1.11.285), no el motor SQLite.
+      Dependency-Check lo emparejó con cpe:2.3:a:sqlite:sqlite:1.11.285 (confianza MEDIUM, solo por el nombre) y por eso
+      le atribuyó 39 CVE de versiones antiguas del motor (2015-2020 y otros). El motor que la app incluye de verdad es
+      SourceGear.sqlite3 3.53.3 (vía SQLitePCLRaw.provider.e_sqlite3 3.0.3), paquete que la herramienta no marca.
+      Evidencia: dotnet list package --include-transitive sobre mobile/FleetTrack.Mobile.csproj y el reporte original.
+      Revisar antes de la fecha de caducidad o al actualizar SQLitePCLRaw / SourceGear.sqlite3.
+    ]]></notes>
+    <packageUrl regex="true">^pkg:nuget/sqlite\-net\-pcl@.*$</packageUrl>
+    <cpe>cpe:/a:sqlite:sqlite</cpe>
+  </suppress>
+</suppressions>

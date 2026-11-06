@@ -67,7 +67,7 @@ Cifras totales: **77 pruebas automatizadas en verde** (6 unitarias, 22 integraci
 | Cloud + IaC | 2,5 | `infrastructure/terraform`, `terraform validate` dentro del pipeline | Parcial: sin `apply` (Azure sin confirmar) |
 | Docker + Ansible + reproducibilidad | 2,0 | `docker compose up -d --wait` con healthchecks, contenedores sin privilegios, roles de Ansible | Docker completo; Ansible validado en sintaxis, sin ejecutar en un host |
 | Jenkins CI/CD + Quality Gates | 2,0 | Build #11, `Jenkinsfile`, JCasC, Quality Gate de Sonar | Completo (falta que Dependency-Check lo deje en verde) |
-| SonarQube + Fortify + Dependency-Check + npm audit | 2,5 | Sonar OK; Semgrep como sustituto de Fortify; Dependency-Check; npm audit 0 | Fortify sustituido (pedir excepción al docente); Dependency-Check en curso |
+| SonarQube + Fortify + Dependency-Check + npm audit | 2,5 | Sonar OK; Semgrep como sustituto de Fortify; Dependency-Check ejecutado; npm audit 0 | Fortify sustituido (pedir excepción al docente); Dependency-Check con 1 falso positivo documentado |
 | API + Insomnia + Redis + RabbitMQ | 2,0 | 22 pruebas de integración, colección Insomnia, experimentos E4 a E6 | Completo |
 | Cypress | 1,5 | 15 pruebas en `frontend/cypress` | Completo |
 | Maestro | 1,5 | 8 flujos, `tests/maestro/run-all.sh` | Completo |
@@ -135,6 +135,7 @@ Ver sección 6.
 
 ## 5. Lo que hay que decir con honestidad (te lo van a preguntar)
 
+- **Dependency-Check:** se ejecutó con la base de NVD completa (420 399 registros) sobre 229 dependencias. Marcó 39 CVE (3 críticos) y **todos** en un único paquete, `sqlite-net-pcl`. Es un falso positivo por confusión de CPE: la herramienta tomó la versión del envoltorio de C# (1.11.285) como si fuera la del motor SQLite, y por eso le asignó CVE de 2015 a 2020. El motor real es `SourceGear.sqlite3` 3.53.3, que no se marca. Se aceptó como riesgo con justificación y caducidad 2027-01-31 en `tests/security/dependency-check-suppressions.xml`, y el reporte original se conserva (`reports/dependency-check/*-sin-supresion.html`). Lo decide Alejandro.
 - **Fortify:** no hay licencia; se usó **Semgrep** con las mismas categorías (SAST, seguridad, secretos) y 0 hallazgos en backend, frontend y mobile. Pedir al docente una excepción académica expresa.
 - **Azure:** Terraform y Ansible están listos y validados en sintaxis, sin `apply`, porque la suscripción no está confirmada.
 - **Issues de GitHub:** se trabajó con PR y autoevaluación; los casos de prueba enlazan al PR de entrega.
@@ -147,9 +148,9 @@ Ver sección 6.
 
 ## 6. Cierre: decisión GO / NO-GO
 
-Qué decir: «Todas las verificaciones automatizadas pasan (77 de 77), el Quality Gate está aprobado sin cambiar umbrales, no hay defectos críticos ni altos abiertos, y el rendimiento cumple con holgura. Aun así, el plan establece que un reporte obligatorio ausente deja la ejecución incompleta, así que la decisión es **NO-GO provisional** hasta cerrar tres evidencias: Dependency-Check, la usabilidad con 5 personas y la aprobación de los riesgos residuales. El candidato `v0.9.0-rc1` es apto en funcionalidad.»
+Qué decir: «Todas las verificaciones automatizadas pasan (77 de 77), el Quality Gate está aprobado sin cambiar umbrales, Dependency-Check se ejecutó y su único hallazgo es un falso positivo analizado y documentado, no hay defectos críticos ni altos abiertos y el rendimiento cumple con holgura. La decisión es **NO-GO provisional** solo porque faltan dos cierres que dependen de personas: la prueba de usabilidad con 5 participantes y la aprobación de Alejandro de los riesgos residuales. El candidato `v0.9.0-rc1` es apto en funcionalidad.»
 
-Si Dependency-Check queda sin hallazgos críticos y la usabilidad llega al 80 %, la decisión pasa a **GO** con la autorización de Alejandro en Jenkins. Tabla de criterios de salida en la sección 8 de `informe-final.pdf`.
+Si la usabilidad llega al 80 % y Alejandro aprueba los riesgos, la decisión pasa a **GO** con su autorización en Jenkins. Tabla de criterios de salida en la sección 8 de `informe-final.pdf`.
 
 ## 7. Preguntas probables
 
@@ -170,6 +171,7 @@ Si Dependency-Check queda sin hallazgos críticos y la usabilidad llega al 80 %,
 - [ ] Ruta creada para el conductor de prueba y app con pantalla encendida.
 - [ ] Pestañas abiertas (tabla de la sección 0) y terminal en la raíz del repo.
 - [ ] Rama `main` actualizada y PR #18 de esta etapa mergeado (si lo hay).
-- [ ] Reporte de Dependency-Check generado y revisado; usabilidad registrada en el CSV.
+- [x] Reporte de Dependency-Check generado y revisado (`reports/dependency-check/dependency-check-report.html`).
+- [ ] Usabilidad registrada en el CSV.
 - [ ] Informe final regenerado con esos dos resultados (`node docs/build-pdfs.mjs` y `python docs/src/build-xlsx.py`).
 - [ ] Cada integrante sabe su bloque y puede explicar la arquitectura completa.

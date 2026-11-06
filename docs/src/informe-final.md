@@ -6,7 +6,7 @@ Curso 048 Aseguramiento de la Calidad del Software, Universidad Mariano Gálvez.
 
 FleetTrack funciona de punta a punta: dashboard web, API, mensajería con outbox, consumidor idempotente y app Android con modo sin conexión. Las **77 verificaciones automatizadas pasan**, la app Android se validó en un emulador real, el **pipeline de Jenkins se ejecutó de punta a punta** y las pruebas de carga a escala completa pasaron con holgura. El Quality Gate de SonarQube está en **OK** (0 bugs, 0 vulnerabilidades) con cobertura medida del backend de **82,1 %**.
 
-**Recomendación: NO-GO para el despliegue final por ahora; el candidato `v0.9.0-rc1` es apto en funcionalidad.** El plan establece que un reporte obligatorio ausente deja la ejecución incompleta y sin aprobación final. Faltan tres evidencias que no dependen de código (sección 8). Con ellas cerradas la decisión pasa a GO sin cambios en el producto.
+**Recomendación: NO-GO para el despliegue final por ahora; el candidato `v0.9.0-rc1` es apto en funcionalidad.** El plan establece que un reporte obligatorio ausente deja la ejecución incompleta y sin aprobación final. Faltan dos cierres que dependen de personas (sección 8). Con ellas cerradas la decisión pasa a GO sin cambios en el producto.
 
 ## 2. Resultados de pruebas
 
@@ -31,8 +31,10 @@ Las suites de integración y recuperación también se ejecutaron con la API ins
 | OWASP ZAP web (baseline) | 0 FAIL, 3 avisos informativos aceptados |
 | OWASP ZAP API | 0 FAIL, 0 avisos |
 | npm audit y NuGet (`--vulnerable`) | 0 vulnerabilidades |
-| OWASP Dependency-Check | **Bloqueado**: exige clave de la API de NVD |
+| OWASP Dependency-Check (229 dependencias, base NVD con 420 399 registros) | Sin supresión: 39 hallazgos (3 críticos) **todos en un solo paquete**, `sqlite-net-pcl`. Es un **falso positivo por confusión de CPE** (ver abajo). Con la supresión documentada: 0 hallazgos |
 | Contenedores | Todos sin privilegios |
+
+**Análisis del hallazgo de Dependency-Check.** `sqlite-net-pcl` 1.11.285 es un envoltorio ORM de C#, no el motor SQLite. La herramienta lo emparejó con `cpe:2.3:a:sqlite:sqlite:1.11.285` (confianza MEDIUM, solo por el nombre) y trató 1.11.285 como versión del motor, por lo que le atribuyó CVE de versiones antiguas (2015-2020). El motor que la app incluye es `SourceGear.sqlite3` 3.53.3 (por `SQLitePCLRaw.provider.e_sqlite3` 3.0.3), que la herramienta no marca. Se registró como **riesgo aceptado con justificación y caducidad 2027-01-31** en `tests/security/dependency-check-suppressions.xml`; el reporte original sin supresión se conserva en `reports/dependency-check/dependency-check-report-sin-supresion.*`. La aceptación la decide Alejandro.
 
 Autorización: el conductor no puede operar rutas ni entregas ajenas (pruebas de integración) y los listados de administración devuelven 401 sin token y 403 para el rol conductor.
 
@@ -76,7 +78,8 @@ Limitaciones honestas: todos los usuarios virtuales reportan como el mismo condu
 | D-07 | Flujos Maestro con teclado, cámara y patrones incorrectos | Baja | Corregido |
 | D-08 | El mensaje "guardada" no se limpia tras sincronizar | Baja | **Abierto** (cosmético) |
 | D-09 | Quality Gate en ERROR por cobertura no medida | Alta | Corregido: cobertura medida con `dotnet-coverage` |
-| D-10 | Dependency-Check sin clave de NVD | Media | **Abierto** (bloqueado) |
+| D-10 | Dependency-Check sin clave de NVD | Media | Corregido: ejecutado con clave; hallazgo analizado como falso positivo |
+| D-16 | `sqlite-net-pcl`: 39 CVE atribuidos por confusión de CPE | Media | Riesgo aceptado con justificación (pendiente de aprobación de Alejandro) |
 | D-11 | Sonar marcaba `allowBackup` y HTTP en la app móvil | Media | Corregido: `allowBackup=false`, cleartext solo a `10.0.2.2` |
 | D-12 | Controlador de plantilla `WeatherForecast` sin uso | Baja | Corregido: eliminado |
 | D-13 | Semgrep local bloqueado por el Control de aplicaciones de Windows | Media | Corregido: corre en su imagen oficial de Docker |
@@ -102,18 +105,19 @@ Ningún defecto crítico o alto sigue abierto.
 |---|---|
 | Cero pruebas críticas fallidas | Cumple (77 / 77) |
 | Quality Gate aprobado sin cambiar umbrales | Cumple |
-| Sin vulnerabilidades críticas no aceptadas | Cumple en lo medido (Dependency-Check pendiente) |
-| Reportes obligatorios presentes | **No cumple**: falta Dependency-Check |
+| Sin vulnerabilidades críticas no aceptadas | **Cumple** si Alejandro acepta el falso positivo documentado de `sqlite-net-pcl` |
+| Reportes obligatorios presentes | **Cumple** (Dependency-Check ejecutado el 2026-11-06) |
 | p95 < 500 ms y errores < 1 % a escala completa | **Cumple** (p95 20 / 23 / 29,7 ms; 0,008 % de errores en load) |
 | Usabilidad ≥ 80 % con 5 participantes | **No demostrado**: sin participantes |
-| Pipeline de Jenkins ejecutado con el reporte de Quality Gate | **Cumple parcialmente**: build #11 con 20 de 21 etapas en verde (incluye Maestro, ZAP y Quality Gate OK); la etapa de criterios de salida bloquea por el reporte faltante de Dependency-Check, que es su función |
+| Pipeline de Jenkins ejecutado con el reporte de Quality Gate | **Cumple parcialmente**: build #11 con 20 de 21 etapas en verde (incluye Maestro, ZAP y Quality Gate OK); con el reporte de Dependency-Check la etapa de criterios de salida deja de bloquear (se reejecuta el build para confirmarlo) |
 | Autorización explícita de Alejandro en Jenkins | Pendiente |
 
-**Decisión recomendada: NO-GO provisional.** Para pasar a GO hay que cerrar, en este orden:
+**Decisión recomendada: NO-GO provisional**, a falta de dos cierres, ambos de personas:
 
-1. Solicitar la clave gratuita de NVD y ejecutar Dependency-Check (ver `docs/guia-cierre-evidencias.md`); con su reporte el pipeline de Jenkins queda en verde de punta a punta.
-2. Hacer la sesión de usabilidad con 5 personas y registrar `docs/usabilidad/plantilla-resultados.csv`.
-3. Aprobar o rechazar los riesgos residuales de la sección 7; después Alejandro crea la etiqueta del candidato y autoriza el despliegue.
+1. Hacer la sesión de usabilidad con 5 personas y registrar `docs/usabilidad/plantilla-resultados.csv` (criterio: 80 % de éxito).
+2. Alejandro aprueba o rechaza los riesgos residuales de la sección 7 (incluida la supresión de `sqlite-net-pcl`); después crea la etiqueta `v0.9.0-rc1` y autoriza el despliegue.
+
+Con el 80 % de usabilidad y la aprobación, la decisión pasa a **GO** sin cambios en el producto.
 
 ## 9. Evidencia y reproducibilidad
 

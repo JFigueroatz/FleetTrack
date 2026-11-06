@@ -28,7 +28,7 @@ MSYS_NO_PATHCONV=1 docker run --rm -v "$(pwd -W):/src" -v "$(pwd -W)/reports/dep
 
 ```bash
 docker start sonarqube                                   # SonarQube debe estar arriba
-SONAR_ADMIN_PASSWORD='SonarFleetTrack2026!' REPO_BRANCH='*/main' bash infrastructure/jenkins/start-jenkins.sh
+SONAR_ADMIN_PASSWORD='<contraseña de Sonar, ver docs/guia-validacion.md>' REPO_BRANCH='*/main' bash infrastructure/jenkins/start-jenkins.sh
 ```
 
 Abre http://localhost:8081, usuario `alejandro`; la contraseña está en `~/jenkins-fleettrack/admin-password.txt`. El job `fleettrack` se crea solo (JCasC). Parámetros: `FULL_PERFORMANCE` para load/stress/spike completos y `DEPLOY_FINAL` (solo en `main`, pide la aprobación de Alejandro).

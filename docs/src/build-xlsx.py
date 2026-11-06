@@ -56,7 +56,7 @@ RIESGOS = [
     ("R07", "Defectos de seguridad web", "Cabeceras ausentes, contenedores root", 3, 4,
      "Cabeceras en nginx y API; contenedores sin privilegios; ZAP y Semgrep en cada build", "CT-SEG-01..05", "Mitigado (3 avisos informativos de ZAP aceptados)"),
     ("R08", "Vulnerabilidades en dependencias", "Paquetes npm o NuGet vulnerables", 3, 4,
-     "npm audit, dotnet list package --vulnerable y Dependency-Check en el pipeline", "CT-SEG-06/07/08", "Abierto: Dependency-Check bloqueado por falta de clave NVD"),
+     "npm audit, dotnet list package --vulnerable y Dependency-Check en el pipeline", "CT-SEG-06/07/08", "Mitigado: Dependency-Check ejecutado; 1 falso positivo documentado"),
     ("R09", "Rendimiento insuficiente bajo carga", "100 a 300 conductores enviando ubicación", 3, 4,
      "Caché Redis, índices, k6 load/stress/spike con umbrales", "CT-PER-01..04", "Mitigado: escala completa medida (p95 20-30 ms, sin saturar a 300 VUs)"),
     ("R10", "Calidad de código nuevo sin cobertura", "Pruebas de integración por HTTP no medían cobertura", 4, 3,
@@ -185,7 +185,7 @@ for i, (cid, d, p, res, ev, df) in enumerate([
     ("CT-SEG-05", "ZAP API (/health): 0 FAIL, 0 avisos", "RNF-03", "Aprobado", "reports/zap/zap-api-report-semana7.html", "D-06"),
     ("CT-SEG-06", "npm audit frontend: 0 vulnerabilidades", "RNF-03", "Aprobado", "npm audit", ""),
     ("CT-SEG-07", "NuGet: sin paquetes vulnerables (5 proyectos)", "RNF-03", "Aprobado", "dotnet list package --vulnerable", ""),
-    ("CT-SEG-08", "OWASP Dependency-Check", "RNF-03", "Bloqueado", "Falta la clave de la API de NVD", "D-10"),
+    ("CT-SEG-08", "OWASP Dependency-Check: 229 dependencias; 39 hallazgos en sqlite-net-pcl (falso positivo por CPE, suprimido con justificación); 0 tras la supresión", "RNF-03", "Aprobado", "reports/dependency-check/dependency-check-report.html y *-sin-supresion.html", "D-16"),
     ("CT-CAL-01", "SonarQube: bugs 0, vulnerabilidades 0 y Quality Gate", "RNF-08", "Aprobado", "reports/sonar/quality-gate-actual.json", "D-09"),
     ("CT-PER-01", "k6 load corto (20 VUs, 30 s): p95 < 500 ms, errores < 1 %", "RNF-04", "Aprobado", "reports/performance/", ""),
     ("CT-PER-02", "k6 stress corto (hasta 60 VUs)", "RNF-04", "Aprobado", "reports/performance/", ""),
@@ -196,7 +196,7 @@ for i, (cid, d, p, res, ev, df) in enumerate([
     ("CT-INF-02", "Ansible syntax-check (contenedor python + ansible-core)", "RNF-07", "Aprobado", "Jenkins build #11, etapa Lint y validaciones", ""),
     ("CT-INF-03", "Terraform apply y Ansible contra Azure", "RNF-07", "Pendiente", "Requiere suscripción confirmada", ""),
     ("CT-INF-04", "docker compose up: 6 servicios sanos y reinicio automático", "RNF-07", "Aprobado", "docker compose ps", ""),
-    ("CT-PIP-01", "Pipeline Jenkins de punta a punta: 20 de 21 etapas en verde; la etapa de criterios de salida bloquea por falta del reporte de Dependency-Check", "RNF-07", "Bloqueado", "Jenkins build #11 (infrastructure/jenkins)", "D-10"),
+    ("CT-PIP-01", "Pipeline Jenkins de punta a punta: build #11 con 20 de 21 etapas en verde (Dependency-Check aún sin clave); build con la clave: ver informe final", "RNF-07", "Aprobado", "Jenkins (infrastructure/jenkins)", ""),
 ]):
     add(cid, p, d, "No funcional", "", "PR #14, #15" if cid.startswith(("CT-SEG", "CT-PER", "CT-CAL")) else "", res, ev, df)
 # el campo Prueba de los no funcionales queda con la herramienta
@@ -217,7 +217,8 @@ DEFECTOS = [
     ("D-13", "Semgrep local bloqueado por el Control de aplicaciones de Windows", "Media", "Corregido", "Semgrep corre en su imagen oficial de Docker", "Semana 8", "CT-SEG-01..03"),
     ("D-14", "E4 usaba archivos temporales que fallaban bajo Jenkins en Windows", "Media", "Corregido", "Captura de la respuesta en una variable", "Semana 8", "CT-REC-E4"),
     ("D-15", "run-coverage.sh no compilaba las pruebas de integración en un workspace limpio", "Media", "Corregido", "Compilación explícita antes de --no-build", "Semana 8", "CT-CAL-01"),
-    ("D-10", "Dependency-Check no puede ejecutarse sin clave de NVD", "Media", "Abierto (bloqueado)", "Solicitar clave gratuita y cargarla como credencial de Jenkins", "", "CT-SEG-08"),
+    ("D-10", "Dependency-Check no puede ejecutarse sin clave de NVD", "Media", "Corregido", "Clave solicitada y cargada como credencial de Jenkins", "Semana 8", "CT-SEG-08"),
+    ("D-16", "sqlite-net-pcl: 39 CVE atribuidos por confusión de CPE (versión del envoltorio tomada como versión del motor)", "Media", "Riesgo aceptado (pendiente de aprobación de Alejandro)", "tests/security/dependency-check-suppressions.xml con justificación y caducidad 2027-01-31", "Semana 8", "CT-SEG-08"),
     ("D-11", "Sonar marcaba allowBackup y HTTP implícito en la app móvil", "Media", "Corregido", "allowBackup=false, usesCleartextTraffic=false (cleartext solo a 10.0.2.2 por network_security_config)", "Semana 8", "CT-CAL-01"),
     ("D-12", "Controlador de plantilla WeatherForecast sin uso", "Baja", "Corregido", "Eliminado", "Semana 8", "CT-CAL-01"),
 ]

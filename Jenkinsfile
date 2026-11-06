@@ -106,7 +106,7 @@ pipeline {
             MSYS_NO_PATHCONV=1 docker run --rm -v "$WS:/src" -v "$WS/reports/dependency-check:/report" \
               -v fleettrack-depcheck-data:/usr/share/dependency-check/data owasp/dependency-check:latest \
               --scan /src --nvdApiKey "$NVD_API_KEY" --format HTML --format JSON --out /report \
-              --failOnCVSS 9 --exclude "**/node_modules/**" --exclude "**/bin/**" --exclude "**/obj/**"
+              --failOnCVSS 9 --suppression /src/tests/security/dependency-check-suppressions.xml --exclude "**/node_modules/**" --exclude "**/bin/**" --exclude "**/obj/**"
             (cd backend && dotnet list package --vulnerable --include-transitive | tee ../reports/dependency-check/nuget-vulnerable.txt | { ! grep -q "Critical\\|High"; })
           '''
         }
