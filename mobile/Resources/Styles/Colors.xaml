@@ -27,6 +27,34 @@
     <Color x:Key="Gray900">#212121</Color>
     <Color x:Key="Gray950">#141414</Color>
 
+    <!-- FleetTrack: superficies, texto y estados (mismos valores que el dashboard web) -->
+    <Color x:Key="PageLight">#F3F4FA</Color>
+    <Color x:Key="PageDark">#0F0E1A</Color>
+    <Color x:Key="SurfaceLight">#FFFFFF</Color>
+    <Color x:Key="SurfaceDark">#191829</Color>
+    <Color x:Key="LineLight">#E1E2EE</Color>
+    <Color x:Key="LineDark">#2D2C46</Color>
+    <Color x:Key="InkLight">#1A1930</Color>
+    <Color x:Key="InkDark">#ECEBF8</Color>
+    <Color x:Key="MutedLight">#55557A</Color>
+    <Color x:Key="MutedDark">#AEACCE</Color>
+    <Color x:Key="BrandText">#512BD4</Color>
+    <Color x:Key="BrandTextDark">#BCAEFF</Color>
+    <Color x:Key="BrandSoftLight">#ECE8FB</Color>
+    <Color x:Key="BrandSoftDark">#2A2350</Color>
+    <Color x:Key="OkBgLight">#E2F5EA</Color>
+    <Color x:Key="OkBgDark">#12301F</Color>
+    <Color x:Key="OkInkLight">#0B6B43</Color>
+    <Color x:Key="OkInkDark">#6EE0A3</Color>
+    <Color x:Key="WarnBgLight">#FCEFD2</Color>
+    <Color x:Key="WarnBgDark">#3A2B0C</Color>
+    <Color x:Key="WarnInkLight">#7A4A00</Color>
+    <Color x:Key="WarnInkDark">#F3C86B</Color>
+    <Color x:Key="BadBgLight">#FDE7E5</Color>
+    <Color x:Key="BadBgDark">#3D1614</Color>
+    <Color x:Key="BadInkLight">#A8201A</Color>
+    <Color x:Key="BadInkDark">#FF9A92</Color>
+
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
     <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}"/>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
+import { Notice } from "../components/ui";
 import { useAuth } from "./AuthContext";
 
 export function RequireSupervisor({ children }: { children: ReactNode }) {
@@ -10,7 +11,7 @@ export function RequireSupervisor({ children }: { children: ReactNode }) {
   }
 
   if (!roles.includes("Supervisor")) {
-    return <p role="alert">No tienes permiso de supervisor para ver esta pagina.</p>;
+    return <Notice tone="bad" role="alert">No tienes permiso de supervisor para ver esta pagina.</Notice>;
   }
 
   return <>{children}</>;

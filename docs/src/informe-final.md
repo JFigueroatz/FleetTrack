@@ -76,7 +76,7 @@ Limitaciones honestas: todos los usuarios virtuales reportan como el mismo condu
 | D-05 | Sonar: 2 bugs, 5 vulnerabilidades, 14 smells | Media | Corregido |
 | D-06 | ZAP: 10 avisos de cabeceras | Media | Corregido (3 informativos aceptados) |
 | D-07 | Flujos Maestro con teclado, cámara y patrones incorrectos | Baja | Corregido |
-| D-08 | El mensaje "guardada" no se limpia tras sincronizar | Baja | **Abierto** (cosmético) |
+| D-08 | El mensaje "guardada" no se limpia tras sincronizar | Baja | Corregido: el aviso se limpia al confirmarse en el servidor |
 | D-09 | Quality Gate en ERROR por cobertura no medida | Alta | Corregido: cobertura medida con `dotnet-coverage` |
 | D-10 | Dependency-Check sin clave de NVD | Media | Corregido: ejecutado con clave; hallazgo analizado como falso positivo |
 | D-16 | `sqlite-net-pcl`: 39 CVE atribuidos por confusión de CPE | Media | Riesgo aceptado con justificación (pendiente de aprobación de Alejandro) |
@@ -85,6 +85,7 @@ Limitaciones honestas: todos los usuarios virtuales reportan como el mismo condu
 | D-13 | Semgrep local bloqueado por el Control de aplicaciones de Windows | Media | Corregido: corre en su imagen oficial de Docker |
 | D-14 | Experimento E4 usaba archivos temporales que fallaban bajo Jenkins en Windows | Media | Corregido: captura en variable |
 | D-15 | Script de cobertura no compilaba las pruebas de integración en un workspace limpio | Media | Corregido |
+| D-17 | Rediseño de la interfaz: axe halló contraste insuficiente en tema oscuro (4,09:1) y una animación que bajaba la opacidad del texto | Media | Corregido (5,86:1; animación solo de desplazamiento) |
 
 Ningún defecto crítico o alto sigue abierto.
 
@@ -126,4 +127,5 @@ Con el 80 % de usabilidad y la aprobación, la decisión pasa a **GO** sin cambi
 - Plan de pruebas y arquitectura: `docs/plan-pruebas.pdf`, `docs/arquitectura.pdf`.
 - Jenkins: `infrastructure/jenkins/start-jenkins.sh` (controlador, plugins, credenciales y job como código) y `Jenkinsfile`; guía en `docs/guia-cierre-evidencias.md`.
 - Cobertura: `bash tests/coverage/run-coverage.sh` y `bash tests/coverage/sonar-scan.sh`. Reportes en `reports/` (ignorada por Git; cada ejecución del pipeline los archiva por número de build y commit).
+- Diseño de la interfaz web y móvil: `docs/diseno-interfaz.md`.
 - Regeneración de documentos: `node docs/build-pdfs.mjs` y `python docs/src/build-xlsx.py`.

@@ -59,6 +59,10 @@ Las fuentes están en `docs/src` (Markdown y el generador de los Excel). Los cas
 
 **NO-GO provisional**, candidato `v0.9.0-rc1` apto en funcionalidad. Faltan tres evidencias: la clave de NVD y Dependency-Check, la usabilidad con 5 personas y la aprobación de los riesgos residuales. Detalle en el informe final, sección 8.
 
-## 5. Otras mejoras
+## 5. Rediseño de la interfaz
+
+La web y la app móvil se rediseñaron con un mismo lenguaje visual (marca índigo, tema claro y oscuro, estados y avisos de color, dashboard en vivo, deslizar para actualizar en el móvil). Cypress 15/15 (también sobre la versión de producción con nginx) y Maestro 8/8 siguen en verde, y axe no halla violaciones en claro ni en oscuro. Detalle en `docs/diseno-interfaz.md`. Con esto también queda corregido el defecto D-08.
+
+## 6. Otras mejoras
 
 `.gitattributes` con LF obligatorio para scripts, Jenkinsfile y YAML (git avisaba de conversiones a CRLF).

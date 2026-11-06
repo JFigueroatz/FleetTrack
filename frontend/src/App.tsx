@@ -1,6 +1,7 @@
-import { Link, Navigate, Route, Routes } from "react-router-dom";
+import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { RequireSupervisor } from "./auth/RequireSupervisor";
+import { BrandMark, Icon, initials, type IconName } from "./components/Icon";
 import { LoginPage } from "./pages/LoginPage";
 import { CustomersPage } from "./pages/CustomersPage";
 import { VehiclesPage } from "./pages/VehiclesPage";
@@ -8,26 +9,49 @@ import { DriversPage } from "./pages/DriversPage";
 import { AssignRoutePage } from "./pages/AssignRoutePage";
 import { DashboardPage } from "./pages/DashboardPage";
 
+const NAV: ReadonlyArray<readonly [string, string, IconName]> = [
+  ["/dashboard", "Dashboard", "dashboard"],
+  ["/rutas", "Rutas", "route"],
+  ["/clientes", "Clientes", "customers"],
+  ["/vehiculos", "Vehiculos", "vehicles"],
+  ["/conductores", "Conductores", "drivers"],
+];
+
 function Layout({ children }: { children: React.ReactNode }) {
-  const { token, fullName, logout } = useAuth();
+  const { token, fullName, roles, logout } = useAuth();
 
   return (
-    <div>
-      <header>
-        <strong>FleetTrack</strong>
-        {token && (
-          <nav>
-            <Link to="/dashboard">Dashboard</Link>
-            <Link to="/rutas">Rutas</Link>
-            <Link to="/clientes">Clientes</Link>
-            <Link to="/vehiculos">Vehiculos</Link>
-            <Link to="/conductores">Conductores</Link>
-            <span>{fullName}</span>
-            <button type="button" onClick={logout}>Salir</button>
+    <div className={token ? "app" : undefined}>
+      <a className="skip-link" href="#main">Saltar al contenido</a>
+
+      {token && (
+        <aside className="rail">
+          <h1 className="brand"><BrandMark />FleetTrack</h1>
+
+          <nav aria-label="Principal">
+            {NAV.map(([to, label, icon]) => (
+              <NavLink key={to} to={to}>
+                <Icon name={icon} />
+                {label}
+              </NavLink>
+            ))}
           </nav>
-        )}
-      </header>
-      {children}
+
+          <div className="rail-user">
+            <span className="avatar" aria-hidden="true">{initials(fullName ?? "")}</span>
+            <div className="who">
+              <strong>{fullName}</strong>
+              <span>{roles.includes("Supervisor") ? "Supervisor" : roles.join(", ")}</span>
+            </div>
+            <button type="button" onClick={logout}>
+              <Icon name="logout" size={16} />
+              Salir
+            </button>
+          </div>
+        </aside>
+      )}
+
+      <main id="main" className={token ? "content" : undefined}>{children}</main>
     </div>
   );
 }
