@@ -16,6 +16,7 @@ dist/
 build/
 .vite/
 coverage/
+!tests/coverage/
 
 # MAUI / Android
 **/android/app/build/
@@ -52,3 +53,6 @@ frontend/cypress/videos/
 Thumbs.db
 .vscode/
 .idea/
+
+# Fotos de evidencia generadas al correr la API en el host (cobertura)
+/evidence/

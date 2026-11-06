@@ -9,7 +9,7 @@ public class AuthService(HttpClient httpClient)
 {
     public async Task<LoginResult> LoginAsync(string email, string password)
     {
-        var response = await httpClient.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/api/auth/login", new LoginRequest(email, password));
+        var response = await httpClient.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}/api/auth/login", new LoginRequest(email, password)); // NOSONAR S5332: ver AppConfig
 
         if (!response.IsSuccessStatusCode)
         {
