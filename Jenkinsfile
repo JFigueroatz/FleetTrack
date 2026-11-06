@@ -116,9 +116,11 @@ pipeline {
     stage('SAST (Semgrep en lugar de Fortify)') {
       // Fortify requiere licencia no disponible; el plan exige resolver el acceso o una excepcion academica expresa.
       steps {
+        // Semgrep corre en su imagen oficial: no depende de un ejecutable local (Windows lo bloquea con Control de aplicaciones).
         sh '''
-          semgrep --error --config p/csharp --config p/security-audit --config p/secrets --json -o reports/fortify/semgrep-backend-mobile.json backend/ mobile/
-          semgrep --error --config p/typescript --config p/react --config p/security-audit --config p/secrets --json -o reports/fortify/semgrep-frontend.json frontend/src frontend/cypress
+          WS=$(pwd -W 2>/dev/null || pwd)
+          docker run --rm -v "$WS:/src" -w /src semgrep/semgrep:1.183.0 semgrep --error --config p/csharp --config p/security-audit --config p/secrets --json -o reports/fortify/semgrep-backend-mobile.json backend mobile
+          docker run --rm -v "$WS:/src" -w /src semgrep/semgrep:1.183.0 semgrep --error --config p/typescript --config p/react --config p/security-audit --config p/secrets --json -o reports/fortify/semgrep-frontend.json frontend/src frontend/cypress
         '''
       }
     }
