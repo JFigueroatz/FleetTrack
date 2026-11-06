@@ -134,7 +134,7 @@ pipeline {
         sh '''
           docker compose up -d --wait
           curl -fsS http://localhost:8080/health
-          curl -fsS -o /dev/null http://localhost:3000/
+          curl -fsS http://localhost:3000/ > /dev/null
         '''
       }
     }
