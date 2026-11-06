@@ -4,9 +4,9 @@ Curso 048 Aseguramiento de la Calidad del Software, Universidad Mariano Gálvez.
 
 ## 1. Resumen ejecutivo
 
-FleetTrack funciona de punta a punta: dashboard web, API, mensajería con outbox, consumidor idempotente y app Android con modo sin conexión. Las **77 verificaciones automatizadas pasan** y la app Android se validó en un emulador real. El Quality Gate de SonarQube está en **OK** (0 bugs, 0 vulnerabilidades) con cobertura medida del backend de **82,1 %**.
+FleetTrack funciona de punta a punta: dashboard web, API, mensajería con outbox, consumidor idempotente y app Android con modo sin conexión. Las **77 verificaciones automatizadas pasan**, la app Android se validó en un emulador real, el **pipeline de Jenkins se ejecutó de punta a punta** y las pruebas de carga a escala completa pasaron con holgura. El Quality Gate de SonarQube está en **OK** (0 bugs, 0 vulnerabilidades) con cobertura medida del backend de **82,1 %**.
 
-**Recomendación: NO-GO para el despliegue final por ahora; el candidato `v0.9.0-rc1` es apto en funcionalidad.** El plan establece que un reporte obligatorio ausente deja la ejecución incompleta y sin aprobación final. Faltan cinco evidencias que no dependen de código (sección 8). Con ellas cerradas la decisión pasa a GO sin cambios en el producto.
+**Recomendación: NO-GO para el despliegue final por ahora; el candidato `v0.9.0-rc1` es apto en funcionalidad.** El plan establece que un reporte obligatorio ausente deja la ejecución incompleta y sin aprobación final. Faltan tres evidencias que no dependen de código (sección 8). Con ellas cerradas la decisión pasa a GO sin cambios en el producto.
 
 ## 2. Resultados de pruebas
 
@@ -49,15 +49,19 @@ La cobertura de código se mide sobre el backend (C#, xUnit). Quedan fuera del c
 
 ## 5. Rendimiento
 
-Corridas cortas con k6 sobre `POST /api/tracking` (todas con 0 % de errores):
+k6 sobre `POST /api/tracking`, **a la escala del plan**, el 2026-11-06 en el equipo de QA (Intel Core i7-13620H, 10 núcleos, 15,6 GB de RAM; API, PostgreSQL, Redis, RabbitMQ y k6 en la misma máquina, emulador cerrado):
 
-| Escenario | Usuarios virtuales | p95 | Errores |
-|---|---|---|---|
-| Load | 20 (30 s) | 67,5 ms | 0 % |
-| Stress | 20 → 60 | 81,2 ms | 0 % |
-| Spike | 20 → 80 → 20 | 20 ms | 0 % |
+| Escenario | Usuarios virtuales | Duración | Peticiones | p95 | Máximo | Errores |
+|---|---|---|---|---|---|---|
+| Load | 100 | 10 min | 12 001 | **20,0 ms** | 675 ms | 1 de 12 001 (0,008 %) |
+| Stress | hasta 300 | 12 min | 31 277 | **23,1 ms** | 160 ms | 0 |
+| Spike | salto a 300 | 3,5 min | 4 726 | **29,7 ms** | 80 ms | 0 |
 
-**Pendiente**: la escala del plan (100 usuarios durante 10 min, stress hasta 300 y spike de 100 a 300) no se ejecutó; el Jenkinsfile la dispara con el parámetro `FULL_PERFORMANCE`. Mientras tanto los resultados cortos no demuestran el criterio de salida.
+Criterio de salida (p95 < 500 ms y errores < 1 %): **cumple** en los tres. En el stress no se llegó a saturar el sistema con 300 usuarios virtuales: el límite real queda por encima de lo que el plan pide probar.
+
+Sin pérdida ni duplicados: tras las tres corridas había 48 000 filas en `TrackingEvents` (48 000 identificadores distintos) y 48 000 eventos `LocationUpdated` procesados por el consumidor, igual a las 48 001 peticiones enviadas menos la única fallida; el outbox, la cola principal y la cola de fallidos quedaron en 0.
+
+Limitaciones honestas: todos los usuarios virtuales reportan como el mismo conductor del seed (atajo declarado en `tests/k6/load.js`) y generador y servidor comparten máquina, así que la medición es válida para este equipo y no extrapolable a otro entorno.
 
 ## 6. Defectos
 
@@ -75,6 +79,9 @@ Corridas cortas con k6 sobre `POST /api/tracking` (todas con 0 % de errores):
 | D-10 | Dependency-Check sin clave de NVD | Media | **Abierto** (bloqueado) |
 | D-11 | Sonar marcaba `allowBackup` y HTTP en la app móvil | Media | Corregido: `allowBackup=false`, cleartext solo a `10.0.2.2` |
 | D-12 | Controlador de plantilla `WeatherForecast` sin uso | Baja | Corregido: eliminado |
+| D-13 | Semgrep local bloqueado por el Control de aplicaciones de Windows | Media | Corregido: corre en su imagen oficial de Docker |
+| D-14 | Experimento E4 usaba archivos temporales que fallaban bajo Jenkins en Windows | Media | Corregido: captura en variable |
+| D-15 | Script de cobertura no compilaba las pruebas de integración en un workspace limpio | Media | Corregido |
 
 Ningún defecto crítico o alto sigue abierto.
 
@@ -85,7 +92,8 @@ Ningún defecto crítico o alto sigue abierto.
 | Fortify no está disponible; se usó Semgrep | Pedir al docente una excepción académica expresa |
 | La app no se probó en un teléfono físico | Requiere la IP de la PC en `AppConfig.cs` y en la `network_security_config` |
 | Terraform y Ansible sin ejecutar contra Azure | Requiere confirmar Azure for Students |
-| Jenkins no está montado: el `Jenkinsfile` tiene sintaxis verificada pero no se corrió en un servidor | Montar Jenkins con los agentes `qa` y `android` y las credenciales indicadas en el archivo |
+| Jenkins corre solo en la máquina de desarrollo (controlador y agentes `qa`/`android` son el mismo equipo) | Aceptable para el curso; un equipo dedicado reduciría la interferencia de otras tareas |
+| El Control de aplicaciones de Windows bloquea de forma intermitente binarios recién compilados (afectó a Semgrep y al espacio de trabajo de Jenkins en `C:\Users`) | Se movió el espacio de trabajo a la unidad del proyecto y Semgrep corre en Docker; no se modificó ninguna configuración de seguridad |
 | Sin OpenAPI publicado: ZAP API solo analiza `/health` | Publicar la especificación en QA |
 
 ## 8. Decisión GO / NO-GO
@@ -96,23 +104,22 @@ Ningún defecto crítico o alto sigue abierto.
 | Quality Gate aprobado sin cambiar umbrales | Cumple |
 | Sin vulnerabilidades críticas no aceptadas | Cumple en lo medido (Dependency-Check pendiente) |
 | Reportes obligatorios presentes | **No cumple**: falta Dependency-Check |
-| p95 < 500 ms y errores < 1 % a escala completa | **No demostrado**: solo corridas cortas |
+| p95 < 500 ms y errores < 1 % a escala completa | **Cumple** (p95 20 / 23 / 29,7 ms; 0,008 % de errores en load) |
 | Usabilidad ≥ 80 % con 5 participantes | **No demostrado**: sin participantes |
-| Pipeline de Jenkins ejecutado con el reporte de Quality Gate | **No demostrado**: Jenkins sin montar |
+| Pipeline de Jenkins ejecutado con el reporte de Quality Gate | **Cumple parcialmente**: build #11 con 20 de 21 etapas en verde (incluye Maestro, ZAP y Quality Gate OK); la etapa de criterios de salida bloquea por el reporte faltante de Dependency-Check, que es su función |
 | Autorización explícita de Alejandro en Jenkins | Pendiente |
 
 **Decisión recomendada: NO-GO provisional.** Para pasar a GO hay que cerrar, en este orden:
 
-1. Solicitar la clave gratuita de NVD y ejecutar Dependency-Check (Andrea).
-2. Correr load, stress y spike a escala completa en la máquina dedicada (Andrea).
-3. Hacer la sesión de usabilidad con 5 personas y registrar `docs/usabilidad/plantilla-resultados.csv` (Manuel).
-4. Montar Jenkins y correr el pipeline completo con el candidato (Manuel y Alejandro).
-5. Aprobar o rechazar los riesgos residuales de la sección 7; después Alejandro crea la etiqueta del candidato y autoriza el despliegue.
+1. Solicitar la clave gratuita de NVD y ejecutar Dependency-Check (ver `docs/guia-cierre-evidencias.md`); con su reporte el pipeline de Jenkins queda en verde de punta a punta.
+2. Hacer la sesión de usabilidad con 5 personas y registrar `docs/usabilidad/plantilla-resultados.csv`.
+3. Aprobar o rechazar los riesgos residuales de la sección 7; después Alejandro crea la etiqueta del candidato y autoriza el despliegue.
 
 ## 9. Evidencia y reproducibilidad
 
 - Matriz de riesgos: `docs/matriz-riesgos.xlsx` (14 riesgos con probabilidad, impacto y pruebas asociadas).
 - Casos de prueba con trazabilidad a requisito, PR, prueba, resultado, evidencia y defecto: `docs/casos-prueba.xlsx` (hojas Casos, Requisitos y Defectos).
 - Plan de pruebas y arquitectura: `docs/plan-pruebas.pdf`, `docs/arquitectura.pdf`.
+- Jenkins: `infrastructure/jenkins/start-jenkins.sh` (controlador, plugins, credenciales y job como código) y `Jenkinsfile`; guía en `docs/guia-cierre-evidencias.md`.
 - Cobertura: `bash tests/coverage/run-coverage.sh` y `bash tests/coverage/sonar-scan.sh`. Reportes en `reports/` (ignorada por Git; cada ejecución del pipeline los archiva por número de build y commit).
 - Regeneración de documentos: `node docs/build-pdfs.mjs` y `python docs/src/build-xlsx.py`.

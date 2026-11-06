@@ -42,4 +42,7 @@ echo "Jenkins en http://localhost:8081  usuario: alejandro  contrasena: $JENKINS
 JH_W=$(cygpath -w "$JENKINS_HOME" 2>/dev/null || echo "$JENKINS_HOME")
 export JENKINS_HOME="$JH_W"
 # ALLOW_LOCAL_CHECKOUT: el job clona este mismo repositorio desde disco (Jenkins solo local, sin exposicion de red).
-exec java -Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true -Djenkins.install.runSetupWizard=false -jar "$JH_W/war/jenkins.war" --httpPort=8081
+# Espacio de trabajo junto al proyecto (fuera del repo): en C:\Users el Control de aplicaciones de Windows bloqueaba los binarios recien compilados.
+WS_DIR=${JENKINS_WORKSPACES_DIR:-$(cd "$REPO/.." && pwd -W 2>/dev/null || pwd)/jenkins-workspace}
+mkdir -p "$WS_DIR"
+exec java -Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true "-Djenkins.model.Jenkins.workspacesDir=$WS_DIR/"'${ITEM_FULL_NAME}' -Djenkins.install.runSetupWizard=false -jar "$JH_W/war/jenkins.war" --httpPort=8081

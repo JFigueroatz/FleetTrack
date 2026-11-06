@@ -33,7 +33,15 @@ Pipeline declarativo en la raíz con la secuencia del plan: checkout → depende
 - Parámetros: `FULL_PERFORMANCE` (load/stress/spike a escala completa) y `DEPLOY_FINAL` (solo en `main`).
 - Reportes archivados por build, con `reports/metadata.json` (build, commit, fecha, ambiente).
 
-**Qué se verificó y qué no:** la sintaxis Groovy se compiló con las librerías de la imagen `jenkins/jenkins:lts-jdk21`, y cada comando de las etapas se ejecutó a mano en esta máquina (excepto Dependency-Check, bloqueado por la clave de NVD). **El pipeline no se ejecutó en un servidor Jenkins.** Desviaciones declaradas: Semgrep en lugar de Fortify (sin licencia) y xUnit contra el stack desplegado en lugar de `inso` para la colección de Insomnia.
+**Ejecución real (build #11 en Jenkins, 24 min):** 20 de 21 etapas en verde: lint con Terraform y Ansible en contenedores, unitarias, SonarQube con cobertura (gate OK), npm audit, SAST, build de imágenes, despliegue QA, 22 pruebas de API, Cypress, recuperación (26/26), **Maestro sobre el emulador (8/8)**, ZAP y rendimiento. La etapa de criterios de salida **bloquea el build** porque falta `dependency-check-report.json`: Dependency-Check falla sin clave de NVD, el build queda UNSTABLE en esa etapa y nada se aprueba sin ese reporte. Es el comportamiento que pide el plan.
+
+Jenkins corre en esta misma máquina (`infrastructure/jenkins/start-jenkins.sh`: controlador, plugins, credenciales y job como código; ver `docs/guia-cierre-evidencias.md`). Desviaciones declaradas: Semgrep en lugar de Fortify (sin licencia), Semgrep y Terraform/Ansible en contenedores, xUnit contra el stack desplegado en lugar de `inso` para Insomnia, y el despliegue final con Ansible solo está escrito (requiere `DEPLOY_FINAL`, la rama `main` y la aprobación de Alejandro; no se ejecutó).
+
+Se corrigieron al ejecutarlo: nombre del plugin de timestamps, checkout local, `MSYS_NO_PATHCONV` solo para `docker run`, E4 sin archivos temporales, compilación de pruebas de integración en workspace limpio, `ADB` en la etapa Maestro, Semgrep en Docker (el Control de aplicaciones de Windows bloqueó el ejecutable) y el espacio de trabajo de Jenkins junto al proyecto (en `C:\Users` bloqueaba binarios recién compilados).
+
+## 2b. Rendimiento a escala completa
+
+Load 100 usuarios virtuales 10 min: p95 20 ms; stress hasta 300: p95 23 ms; spike a 300: p95 29,7 ms; 0,008 % de errores en load y 0 en los demás; 48 000 eventos procesados sin pérdida ni duplicados (detalle y limitaciones en el informe final, sección 5).
 
 ## 3. Documentos formales
 
@@ -49,7 +57,7 @@ Las fuentes están en `docs/src` (Markdown y el generador de los Excel). Los cas
 
 ## 4. Decisión
 
-**NO-GO provisional**, candidato `v0.9.0-rc1` apto en funcionalidad. Faltan cinco evidencias externas (clave de NVD y Dependency-Check, rendimiento a escala completa, usabilidad con 5 personas, Jenkins montado y pipeline ejecutado, aprobación de riesgos residuales). Detalle en el informe final, sección 8.
+**NO-GO provisional**, candidato `v0.9.0-rc1` apto en funcionalidad. Faltan tres evidencias: la clave de NVD y Dependency-Check, la usabilidad con 5 personas y la aprobación de los riesgos residuales. Detalle en el informe final, sección 8.
 
 ## 5. Otras mejoras
 
