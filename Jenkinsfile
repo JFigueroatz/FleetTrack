@@ -6,6 +6,7 @@
 // Reglas: ningun paso ignora errores en silencio; si un reporte obligatorio falta, el build falla.
 // Los secretos vienen de credenciales de Jenkins, nunca de Git. Los reportes se archivan por build y commit.
 // Agentes: 'qa' (Docker, .NET 10, Node 24, k6, Semgrep; equipo propio) y 'android' (SDK + emulador + Maestro).
+// MSYS_NO_PATHCONV=1 solo en los `docker run` (evita que Git Bash convierta /src, /w, /report); en el resto lo necesitan /dev/null y /tmp.
 // Un mismo equipo puede tener las dos etiquetas (ver infrastructure/jenkins). Terraform y Ansible corren en contenedores.
 
 pipeline {
@@ -31,7 +32,6 @@ pipeline {
     SONAR_TOKEN          = credentials('sonar-token')
     // .env de QA (POSTGRES_*, RABBITMQ_*, JWT_SECRET) como credencial tipo "Secret file".
     QA_ENV_FILE          = credentials('fleettrack-qa-env')
-    MSYS_NO_PATHCONV     = '1'
   }
 
   stages {
@@ -62,9 +62,9 @@ pipeline {
           (cd frontend && npm run lint && npx tsc -b)
           docker compose config -q
           for f in tests/recovery/*.sh tests/maestro/*.sh tests/coverage/*.sh; do bash -n "$f"; done
-          docker run --rm -v "$WS/infrastructure/terraform:/w" -w /w hashicorp/terraform:1.9 init -backend=false -input=false
-          docker run --rm -v "$WS/infrastructure/terraform:/w" -w /w hashicorp/terraform:1.9 validate
-          docker run --rm -v "$WS:/w" -w /w python:3.12-slim sh -c "pip install -q ansible-core && ansible-playbook --syntax-check -i ansible/inventory.example.ini ansible/site.yml"
+          MSYS_NO_PATHCONV=1 docker run --rm -v "$WS/infrastructure/terraform:/w" -w /w hashicorp/terraform:1.9 init -backend=false -input=false
+          MSYS_NO_PATHCONV=1 docker run --rm -v "$WS/infrastructure/terraform:/w" -w /w hashicorp/terraform:1.9 validate
+          MSYS_NO_PATHCONV=1 docker run --rm -v "$WS:/w" -w /w python:3.12-slim sh -c "pip install -q ansible-core && ansible-playbook --syntax-check -i ansible/inventory.example.ini ansible/site.yml"
         '''
       }
     }
@@ -103,7 +103,7 @@ pipeline {
         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
           sh '''
             WS=$(pwd -W 2>/dev/null || pwd)
-            docker run --rm -v "$WS:/src" -v "$WS/reports/dependency-check:/report" \
+            MSYS_NO_PATHCONV=1 docker run --rm -v "$WS:/src" -v "$WS/reports/dependency-check:/report" \
               -v fleettrack-depcheck-data:/usr/share/dependency-check/data owasp/dependency-check:latest \
               --scan /src --nvdApiKey "$NVD_API_KEY" --format HTML --format JSON --out /report \
               --failOnCVSS 9 --exclude "**/node_modules/**" --exclude "**/bin/**" --exclude "**/obj/**"
@@ -119,8 +119,8 @@ pipeline {
         // Semgrep corre en su imagen oficial: no depende de un ejecutable local (Windows lo bloquea con Control de aplicaciones).
         sh '''
           WS=$(pwd -W 2>/dev/null || pwd)
-          docker run --rm -v "$WS:/src" -w /src semgrep/semgrep:1.183.0 semgrep --error --config p/csharp --config p/security-audit --config p/secrets --json -o reports/fortify/semgrep-backend-mobile.json backend mobile
-          docker run --rm -v "$WS:/src" -w /src semgrep/semgrep:1.183.0 semgrep --error --config p/typescript --config p/react --config p/security-audit --config p/secrets --json -o reports/fortify/semgrep-frontend.json frontend/src frontend/cypress
+          MSYS_NO_PATHCONV=1 docker run --rm -v "$WS:/src" -w /src semgrep/semgrep:1.183.0 semgrep --error --config p/csharp --config p/security-audit --config p/secrets --json -o reports/fortify/semgrep-backend-mobile.json backend mobile
+          MSYS_NO_PATHCONV=1 docker run --rm -v "$WS:/src" -w /src semgrep/semgrep:1.183.0 semgrep --error --config p/typescript --config p/react --config p/security-audit --config p/secrets --json -o reports/fortify/semgrep-frontend.json frontend/src frontend/cypress
         '''
       }
     }
@@ -180,9 +180,9 @@ pipeline {
       steps {
         sh '''
           WS=$(pwd -W 2>/dev/null || pwd)
-          docker run --rm --network fleettrack_default -v "$WS/reports/zap:/zap/wrk:rw" zaproxy/zap-stable \
+          MSYS_NO_PATHCONV=1 docker run --rm --network fleettrack_default -v "$WS/reports/zap:/zap/wrk:rw" zaproxy/zap-stable \
             zap-baseline.py -t http://web:8080 -r zap-web-report.html -J zap-web-report.json -I
-          docker run --rm --network fleettrack_default -v "$WS/reports/zap:/zap/wrk:rw" zaproxy/zap-stable \
+          MSYS_NO_PATHCONV=1 docker run --rm --network fleettrack_default -v "$WS/reports/zap:/zap/wrk:rw" zaproxy/zap-stable \
             zap-api-scan.py -t http://api:8080/health -f openapi -r zap-api-report.html -J zap-api-report.json -I
           ! grep -q '"riskcode": "3"' reports/zap/zap-web-report.json reports/zap/zap-api-report.json
         '''
