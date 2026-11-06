@@ -25,8 +25,9 @@ export JENKINS_ADMIN_PASSWORD=$(cat "$JENKINS_HOME/admin-password.txt")
 export SONAR_TOKEN=${SONAR_TOKEN:-$(curl -sf -u "admin:${SONAR_ADMIN_PASSWORD:?define SONAR_TOKEN o SONAR_ADMIN_PASSWORD}" -X POST \
   http://localhost:9000/api/user_tokens/generate -d "name=jenkins-$(date +%s)" | sed 's/.*"token":"\([^"]*\)".*/\1/')}
 export QA_ENV_PATH="$REPO/.env"
-export ANSIBLE_EXTRA_PATH="$JENKINS_HOME/ansible-extra-vars.json"
-[ -f "$ANSIBLE_EXTRA_PATH" ] || echo '{"public_url":"http://localhost"}' > "$ANSIBLE_EXTRA_PATH"   # marcador: no se usa sin DEPLOY_FINAL
+ANSIBLE_EXTRA_FILE="$JENKINS_HOME/ansible-extra-vars.json"
+[ -f "$ANSIBLE_EXTRA_FILE" ] || echo '{"public_url":"http://localhost"}' > "$ANSIBLE_EXTRA_FILE"   # marcador: no se usa sin DEPLOY_FINAL
+export ANSIBLE_EXTRA_PATH=$(cygpath -w "$ANSIBLE_EXTRA_FILE" 2>/dev/null || echo "$ANSIBLE_EXTRA_FILE")
 export REPO_URL=${REPO_URL:-$REPO}
 export REPO_BRANCH=${REPO_BRANCH:-*/main}
 export CASC_JENKINS_CONFIG="$REPO/infrastructure/jenkins/casc.yaml"
@@ -37,4 +38,8 @@ export ANDROID_HOME=$SDK ADB="$SDK/platform-tools/adb.exe" MAESTRO=${MAESTRO:-$H
 export PATH="$SDK/platform-tools:$SDK/emulator:$(dirname "$MAESTRO"):$PATH"
 
 echo "Jenkins en http://localhost:8081  usuario: alejandro  contrasena: $JENKINS_HOME/admin-password.txt"
-exec java -Djenkins.install.runSetupWizard=false -jar "$JENKINS_HOME/war/jenkins.war" --httpPort=8081
+# java.exe es nativo de Windows: necesita rutas de Windows, no /c/Users/...
+JH_W=$(cygpath -w "$JENKINS_HOME" 2>/dev/null || echo "$JENKINS_HOME")
+export JENKINS_HOME="$JH_W"
+# ALLOW_LOCAL_CHECKOUT: el job clona este mismo repositorio desde disco (Jenkins solo local, sin exposicion de red).
+exec java -Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true -Djenkins.install.runSetupWizard=false -jar "$JH_W/war/jenkins.war" --httpPort=8081

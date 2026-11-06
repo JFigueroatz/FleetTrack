@@ -59,9 +59,10 @@ check "mensaje envenenado llega a la cola de fallidos tras reintentos" "$(wait_e
 echo "E4  Caida de Redis"
 docker compose stop redis > /dev/null 2>&1
 check "POST /api/tracking responde 200 sin Redis" "$(post /api/tracking "{\"latitude\":14.95,\"longitude\":-90.5,\"recordedAt\":\"$(iso 'now')\"}")" "200"
-code=$(curl -s -o /dev/null -w '%{http_code}' -D /tmp/h.txt $API/api/tracking/latest -H "Authorization: Bearer $S")
+H=$(mktemp); rm -f "$H"   # archivo propio y vacio en cada corrida: uno fijo en /tmp podia quedar de otra y dar un falso positivo
+code=$(curl -s -o /dev/null -w '%{http_code}' -D "$H" $API/api/tracking/latest -H "Authorization: Bearer $S")
 check "dashboard (GET latest) sigue en 200" "$code" "200"
-check "indica modo degradado" "$(grep -ci 'x-redis-status: unavailable' /tmp/h.txt)" "1"
+check "indica modo degradado" "$(grep -ci 'x-redis-status: unavailable' "$H")" "1"
 check "el dato sale de PostgreSQL (ultima posicion)" "$(last_lat)" "14.95"
 docker compose start redis > /dev/null 2>&1; sleep 5
 
