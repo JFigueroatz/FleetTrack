@@ -73,7 +73,7 @@
       "authentication": { "type": "bearer", "token": "{{ _.supervisorToken }}" }
     },
     {
-      "_id": "req_vehicle_create_dup", "_type": "request", "parentId": "fld_catalog", "name": "POST /api/vehicles — placa duplicada (400)",
+      "_id": "req_vehicle_create_dup", "_type": "request", "parentId": "fld_catalog", "name": "POST /api/vehicles — placa duplicada (409)",
       "method": "POST", "url": "{{ _.baseUrl }}/api/vehicles",
       "authentication": { "type": "bearer", "token": "{{ _.supervisorToken }}" },
       "headers": [{ "name": "Content-Type", "value": "application/json" }],

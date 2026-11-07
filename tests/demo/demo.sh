@@ -7,6 +7,7 @@
 #   evento       crea una ruta nueva e inicia su entrega (genera eventos RouteStarted y DeliveryStarted)
 #   redis-off | redis-on          detiene / arranca Redis
 #   consumer-off | consumer-on    detiene / arranca el consumidor RabbitMQ
+#   api-off | api-on              detiene / arranca la API (caida total: la app movil trabaja offline)
 #   broker-off | broker-on        detiene / arranca RabbitMQ
 #   falla        rompe una prueba a proposito, la ejecuta y restaura el archivo
 #   k6           resumen de los reportes de k6 a escala completa
@@ -54,6 +55,8 @@ case "${1:-}" in
   redis-on)     docker compose start redis;   echo "Redis arriba otra vez." ;;
   consumer-off) docker compose stop consumer; echo "Consumidor detenido: ejecuta 'evento' y mira la cola crecer en RabbitMQ." ;;
   consumer-on)  docker compose start consumer; echo "Consumidor arriba: la cola se vacia sola." ;;
+  api-off)      docker compose stop api;      echo "API detenida: en la app movil finaliza una entrega (queda 'operacion pendiente') y el dashboard pierde conexion." ;;
+  api-on)       docker compose start api;     echo "API arriba: la app movil sincroniza la cola pendiente al recuperar conexion (ejecuta 'estado')." ;;
   broker-off)   docker compose stop rabbitmq; echo "RabbitMQ detenido: la API sigue; el outbox acumula eventos (ejecuta 'estado')." ;;
   broker-on)    docker compose start rabbitmq; echo "RabbitMQ arriba: el outbox se vacia en segundos (ejecuta 'estado')." ;;
   falla)

@@ -125,7 +125,7 @@ INT_REQ = [("Login", "RF-01", "PR #2"), ("Drivers_me", "RF-01", "PR #2"), ("Crea
            ("asigna_ruta", "RF-03", "PR #5"), ("Completar_dos", "RNF-01", "PR #8"), ("concurrentes", "RNF-01", "PR #8"),
            ("eventId", "RNF-01", "PR #8"), ("ajena", "RF-05", "PR #5"), ("otro_conductor", "RF-05", "PR #5"),
            ("fallida", "RF-05", "PR #8"), ("Coordenadas", "RF-07", "PR #5"), ("broker", "RF-07", "PR #9"),
-           ("cliente", "RF-02", "PR #3"), ("vehiculo", "RF-02", "PR #3"), ("conductor", "RF-02", "PR #3"), ("listados", "RF-01", "PR #3")]
+           ("cliente", "RF-02", "PR #3"), ("vehiculo", "RF-02", "PR #3"), ("conductor", "RF-02", "PR #3"), ("listados", "RF-01", "PR #3"), ("Redis", "RF-04", "PR #6")]
 
 
 def int_req(name):
@@ -140,7 +140,7 @@ for f in sorted(glob.glob(os.path.join(ROOT, "backend/tests/FleetTrack.Api.Integ
         n += 1
         req, pr = int_req(m.group(1))
         add(f"CT-INT-{n:02d}", req, m.group(1).replace("_", " ") + (" (x3: clientes, vehiculos, conductores)" if m.group(1).startswith("Los_listados") else ""), "Integración/API", f"{os.path.basename(f)}::{m.group(1)}", pr, "Aprobado", EV["int"])
-assert n == 20, n  # 20 metodos = 22 pruebas xUnit (un Theory con 3 casos)
+assert n == 21, n  # 21 metodos = 23 pruebas xUnit (un Theory con 3 casos)
 
 web_req = {"smoke": ("RF-01", "PR #13"), "flujo-critico": ("RF-03", "PR #13"), "negativo": ("RF-02", "PR #13"),
            "regresion": ("RNF-02", "PR #13"), "accesibilidad": ("RNF-05", "PR #14")}
@@ -224,6 +224,29 @@ DEFECTOS = [
     ("D-11", "Sonar marcaba allowBackup y HTTP implícito en la app móvil", "Media", "Corregido", "allowBackup=false, usesCleartextTraffic=false (cleartext solo a 10.0.2.2 por network_security_config)", "Semana 8", "CT-CAL-01"),
     ("D-12", "Controlador de plantilla WeatherForecast sin uso", "Baja", "Corregido", "Eliminado", "Semana 8", "CT-CAL-01"),
 ]
-sheet(wb, "Defectos", ["ID", "Descripción", "Severidad", "Estado", "Corrección", "PR", "Caso"], [list(d) for d in DEFECTOS], [8, 80, 10, 26, 50, 10, 16])
+# Pasos, esperado, obtenido, prioridad y evidencia de cada defecto (el documento de requisitos los exige).
+DETALLE = {
+    "D-01": ("Instalar la app en Android 9 o superior e iniciar sesión con el conductor de prueba.", "Login correcto contra http://10.0.2.2:8080.", "Error de red: Android bloqueaba el tráfico HTTP sin cifrar.", "P1", "docs/validacion-android-emulador.md"),
+    "D-02": ("En la app, tocar Evidencia en una entrega.", "Se abre la cámara y se puede tomar la foto.", "Excepción: android.media.action.IMAGE_CAPTURE was not added to the <queries> element.", "P1", "docs/validacion-android-emulador.md"),
+    "D-03": ("Apagar la red del emulador y tocar Finalizar.", "La app avisa que la operación quedó pendiente de enviar.", "Mostraba 'Entrega finalizada.' en verde sin matiz, aunque solo estaba encolada.", "P2", "docs/validacion-android-emulador.md"),
+    "D-04": ("Ejecutar la integración o k6 y luego tests/recovery/run-all.sh.", "26 verificaciones en PASS.", "Fallaba E2: Redis conservaba una posición más reciente que la del experimento.", "P2", "docs/semana-7-correcciones-y-candidato-release.md"),
+    "D-05": ("Analizar el proyecto con SonarQube.", "0 bugs y 0 vulnerabilidades.", "2 bugs, 5 vulnerabilidades y 14 code smells.", "P2", "reports/sonar/sonarqube-issues.json"),
+    "D-06": ("Ejecutar zap-baseline contra la web y zap-api-scan contra la API.", "Sin avisos de seguridad.", "9 avisos en la web y 1 en la API (cabeceras de seguridad ausentes).", "P2", "reports/zap/zap-web-report.html"),
+    "D-07": ("Ejecutar los flujos Maestro 01, 05, 06, 07 y 08 sobre el emulador.", "Los 8 flujos en verde.", "Fallaban: el teclado tapaba 'Ingresar', la cámara no se disparaba y los patrones de texto no coincidían.", "P3", "tests/maestro/README.md"),
+    "D-08": ("Finalizar una entrega sin red, reconectar y esperar la sincronización.", "El aviso 'guardada, se enviara al reconectar' desaparece al confirmarse.", "El aviso verde seguía visible aunque la entrega ya estaba Completed.", "P3", "docs/diseno-interfaz.md"),
+    "D-09": ("Analizar con SonarQube sin medir cobertura.", "Quality Gate en OK.", "Quality Gate en ERROR: cobertura de código nuevo 0 %.", "P1", "reports/sonar/quality-gate-actual.json"),
+    "D-10": ("Ejecutar OWASP Dependency-Check sin clave de la API de NVD.", "Reporte de dependencias vulnerables.", "Error updating the NVD Data: el análisis se corta antes de empezar.", "P2", "docs/guia-cierre-evidencias.md"),
+    "D-11": ("Analizar el proyecto móvil con SonarQube.", "Sin vulnerabilidades.", "allowBackup activado y tráfico en claro habilitado implícitamente.", "P2", "reports/sonar/sonarqube-issues.json"),
+    "D-12": ("Revisar los controladores de la API.", "Solo endpoints del negocio.", "Quedaba el controlador de plantilla WeatherForecast, expuesto y sin uso.", "P3", "backend/src/FleetTrack.Api/Controllers"),
+    "D-13": ("Ejecutar semgrep en el equipo con Windows.", "El análisis se ejecuta.", "'Una directiva de Control de aplicaciones bloqueó este archivo'.", "P2", "Jenkinsfile (etapa SAST) y docs/semana-8-pipeline-y-cierre.md"),
+    "D-14": ("Ejecutar la suite de recuperación dentro de Jenkins en Windows.", "E4 en PASS.", "curl devolvía 000 al escribir las cabeceras en un archivo temporal.", "P2", "tests/recovery/run-all.sh"),
+    "D-15": ("Ejecutar tests/coverage/run-coverage.sh en un workspace limpio.", "Corren las pruebas de integración.", "'No se encuentra el archivo de prueba IntegrationTests.dll': no estaba compilado.", "P2", "tests/coverage/run-coverage.sh"),
+    "D-16": ("Ejecutar Dependency-Check con la base de NVD completa.", "Sin hallazgos críticos reales.", "39 hallazgos (3 críticos) en sqlite-net-pcl por confundir la versión del envoltorio con la del motor SQLite.", "P2", "reports/dependency-check/dependency-check-report-sin-supresion.html"),
+    "D-17": ("Ejecutar axe-core sobre el dashboard con el tema oscuro.", "0 violaciones de contraste.", "color-contrast serio: el botón principal tenía 4,09:1 y las etiquetas de marca 3,18:1.", "P2", "docs/diseno-interfaz.md"),
+    "D-18": ("Iniciar una entrega, finalizarla y observar el dashboard.", "El conductor deja de aparecer 'En vivo'.", "Seguía 'En vivo' porque la app continuaba reportando ubicación.", "P2", "docs/diseno-interfaz.md"),
+}
+_filas = [[d[0], d[1], *DETALLE[d[0]][:3], d[2], DETALLE[d[0]][3], DETALLE[d[0]][4], d[3], d[4], d[5], d[6]] for d in DEFECTOS]
+sheet(wb, "Defectos", ["ID", "Descripción", "Pasos para reproducir", "Resultado esperado", "Resultado obtenido", "Severidad", "Prioridad", "Evidencia", "Estado", "Corrección", "PR", "Caso"],
+      _filas, [8, 46, 40, 34, 44, 11, 10, 40, 24, 44, 10, 14])
 wb.save(os.path.join(ROOT, "docs", "casos-prueba.xlsx"))
 print(f"casos: {len(casos)}; riesgos: {len(RIESGOS)}; defectos: {len(DEFECTOS)}")
