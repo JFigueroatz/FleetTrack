@@ -5,31 +5,92 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Mi ruta">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="12">
-            <Label x:Name="DriverLabel" FontSize="20" FontAttributes="Bold" />
-            <Label x:Name="StatusLabel" />
+    <RefreshView x:Name="Refresh" Refreshing="OnRefreshing" RefreshColor="{StaticResource Primary}">
+        <ScrollView>
+            <VerticalStackLayout Spacing="0">
 
-            <ActivityIndicator x:Name="LoadingIndicator" IsRunning="True" />
+                <!-- Cabecera: conductor y estado de la ruta -->
+                <Border BackgroundColor="#1D1259" StrokeThickness="0" Padding="24,20,24,28"
+                        StrokeShape="RoundRectangle 0,0,28,28">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Tu jornada" TextColor="#D6D0F4" FontSize="13" />
+                        <Label x:Name="DriverLabel" TextColor="White" FontSize="26" FontAttributes="Bold" />
+                        <Label x:Name="StatusLabel" TextColor="#D6D0F4" FontSize="15" />
+                        <ActivityIndicator x:Name="LoadingIndicator" IsRunning="True" Color="White" HorizontalOptions="Start"
+                                       IsVisible="{Binding Source={RelativeSource Self}, Path=IsRunning}" />
+                    </VerticalStackLayout>
+                </Border>
 
-            <CollectionView x:Name="DeliveriesView">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Padding="0,8" ColumnDefinitions="*,Auto,Auto,Auto,Auto">
-                            <Label Text="{Binding Label}" VerticalOptions="Center" />
-                            <Button Grid.Column="1" Text="Iniciar" Clicked="OnStartClicked" CommandParameter="{Binding Id}" />
-                            <Button Grid.Column="2" Text="Evidencia" Clicked="OnEvidenceClicked" CommandParameter="{Binding Id}" />
-                            <Button Grid.Column="3" Text="Finalizar" Clicked="OnCompleteClicked" CommandParameter="{Binding Id}" />
-                            <Button Grid.Column="4" Text="Fallida" Clicked="OnFailClicked" CommandParameter="{Binding Id}" />
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                <VerticalStackLayout Padding="20,20,20,28" Spacing="14">
 
-            <Label x:Name="PendingLabel" TextColor="DarkOrange" />
-            <Label x:Name="MessageLabel" TextColor="Green" />
-            <Label x:Name="ErrorLabel" TextColor="Red" />
-        </VerticalStackLayout>
-    </ScrollView>
+                    <!-- Avisos: se muestran solo cuando tienen texto -->
+                    <Border Style="{StaticResource BannerWarn}">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding Source={x:Reference PendingLabel}, Path=Text}" Value="">
+                                <Setter Property="IsVisible" Value="False" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label x:Name="PendingLabel" Text="" TextColor="{AppThemeBinding Light={StaticResource WarnInkLight}, Dark={StaticResource WarnInkDark}}" />
+                    </Border>
+
+                    <Border Style="{StaticResource BannerOk}">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding Source={x:Reference MessageLabel}, Path=Text}" Value="">
+                                <Setter Property="IsVisible" Value="False" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label x:Name="MessageLabel" Text="" TextColor="{AppThemeBinding Light={StaticResource OkInkLight}, Dark={StaticResource OkInkDark}}" />
+                    </Border>
+
+                    <Border Style="{StaticResource BannerBad}">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding Source={x:Reference ErrorLabel}, Path=Text}" Value="">
+                                <Setter Property="IsVisible" Value="False" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label x:Name="ErrorLabel" Text="" TextColor="{AppThemeBinding Light={StaticResource BadInkLight}, Dark={StaticResource BadInkDark}}" />
+                    </Border>
+
+                    <Label Text="Entregas" Style="{StaticResource Ink}" FontSize="18" FontAttributes="Bold" />
+
+                    <CollectionView x:Name="DeliveriesView" SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                                    <VerticalStackLayout Spacing="14">
+
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                            <Border BackgroundColor="{StaticResource Primary}" StrokeThickness="0" StrokeShape="RoundRectangle 16"
+                                                    WidthRequest="32" HeightRequest="32" VerticalOptions="Center">
+                                                <Label Text="{Binding Sequence}" TextColor="White" FontAttributes="Bold"
+                                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                                            </Border>
+                                            <Label Grid.Column="1" Text="{Binding Customer}" Style="{StaticResource Ink}" FontSize="17"
+                                                   FontAttributes="Bold" VerticalOptions="Center" LineBreakMode="TailTruncation" />
+                                            <Border Grid.Column="2" BackgroundColor="{Binding StatusBg}" StrokeThickness="0"
+                                                    StrokeShape="RoundRectangle 20" Padding="10,4" VerticalOptions="Center">
+                                                <Label Text="{Binding Status}" TextColor="{Binding StatusInk}" FontSize="12" FontAttributes="Bold" />
+                                            </Border>
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                                            <Button Text="Iniciar" Style="{StaticResource PrimaryAction}" Clicked="OnStartClicked" CommandParameter="{Binding Id}" />
+                                            <Button Grid.Column="1" Text="Evidencia" Style="{StaticResource QuietAction}" Clicked="OnEvidenceClicked" CommandParameter="{Binding Id}" />
+                                            <Button Grid.Row="1" Text="Finalizar" Style="{StaticResource PrimaryAction}" Clicked="OnCompleteClicked" CommandParameter="{Binding Id}" />
+                                            <Button Grid.Row="1" Grid.Column="1" Text="Fallida" Style="{StaticResource DangerAction}" Clicked="OnFailClicked" CommandParameter="{Binding Id}" />
+                                        </Grid>
+
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <Label Text="Desliza hacia abajo para actualizar." Style="{StaticResource Muted}" HorizontalOptions="Center" FontSize="12" />
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
 
 </ContentPage>

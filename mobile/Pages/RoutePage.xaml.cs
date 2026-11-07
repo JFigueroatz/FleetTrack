@@ -8,6 +8,26 @@ public class DeliveryItem
 {
     public Guid Id { get; set; }
     public string Label { get; set; } = string.Empty;
+    public string Sequence { get; set; } = string.Empty;
+    public string Customer { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+
+    // Colores del estado: pasteles con texto oscuro, legibles sobre tarjeta clara y oscura.
+    public Color StatusBg => Status switch
+    {
+        "InProgress" => Color.FromArgb("#FCEFD2"),
+        "Completed" => Color.FromArgb("#E2F5EA"),
+        "Failed" => Color.FromArgb("#FDE7E5"),
+        _ => Color.FromArgb("#EBEBF3"),
+    };
+
+    public Color StatusInk => Status switch
+    {
+        "InProgress" => Color.FromArgb("#7A4A00"),
+        "Completed" => Color.FromArgb("#0B6B43"),
+        "Failed" => Color.FromArgb("#A8201A"),
+        _ => Color.FromArgb("#4F5068"),
+    };
 }
 
 public partial class RoutePage : ContentPage
@@ -47,6 +67,21 @@ public partial class RoutePage : ContentPage
         _locationTimer?.Stop();
     }
 
+    /// <summary>Deslizar hacia abajo: reenvia lo pendiente y vuelve a consultar la ruta.</summary>
+    private async void OnRefreshing(object? sender, EventArgs e)
+    {
+        try
+        {
+            MessageLabel.Text = string.Empty;
+            await SyncAsync();
+            await LoadRouteAsync();
+        }
+        finally
+        {
+            Refresh.IsRefreshing = false;
+        }
+    }
+
     private async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
         if (e.NetworkAccess == NetworkAccess.Internet)
@@ -66,6 +101,11 @@ public partial class RoutePage : ContentPage
         PendingLabel.Text = result.Pending == 0
             ? string.Empty
             : $"Sin conexion: {result.Pending} operacion(es) pendiente(s) de sincronizar.";
+        if (result.Pending == 0 && MessageLabel.Text?.Contains("guardada") == true)
+        {
+            // Ya se confirmo en el servidor: el aviso "guardada, se enviara al reconectar" dejo de ser cierto.
+            MessageLabel.Text = string.Empty;
+        }
         if (result.Discarded > 0)
         {
             ErrorLabel.Text = $"{result.Discarded} operacion(es) fueron rechazadas por el servidor y se descartaron.";
@@ -100,7 +140,10 @@ public partial class RoutePage : ContentPage
                 _items.Add(new DeliveryItem
                 {
                     Id = delivery.Id,
-                    Label = $"{delivery.Sequence}. {delivery.CustomerName} - {delivery.Status}"
+                    Label = $"{delivery.Sequence}. {delivery.CustomerName} - {delivery.Status}",
+                    Sequence = delivery.Sequence.ToString(),
+                    Customer = delivery.CustomerName,
+                    Status = delivery.Status.ToString()
                 });
             }
 
@@ -134,6 +177,12 @@ public partial class RoutePage : ContentPage
     // La ubicacion se encola siempre (con su hora y EventId) y luego se intenta enviar todo: offline se acumulan, al reconectar salen en orden.
     private async Task QueueCurrentLocationAsync()
     {
+        // Solo se reporta mientras hay una entrega en curso: al finalizarla, el dashboard deja de verla "en vivo".
+        if (!_items.Any(i => i.Status == "InProgress"))
+        {
+            return;
+        }
+
         try
         {
             var location = await Geolocation.Default.GetLocationAsync(

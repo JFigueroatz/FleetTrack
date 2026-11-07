@@ -5,7 +5,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:pages="clr-namespace:FleetTrack.Mobile.Pages"
     Title="FleetTrack.Mobile"
-    FlyoutBehavior="Disabled">
+    FlyoutBehavior="Disabled"
+    Shell.BackgroundColor="#1D1259"
+    Shell.TitleColor="White"
+    Shell.ForegroundColor="White">
 
     <ShellContent
         Title="Ingresar"

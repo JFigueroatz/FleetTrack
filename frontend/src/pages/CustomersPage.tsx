@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { apiFetch } from "../api/client";
+import { initials } from "../components/Icon";
+import { Empty, ListSkeleton, matches, Notice, SearchBox, useNotice } from "../components/ui";
 
 interface Customer {
   id: string;
@@ -9,18 +11,23 @@ interface Customer {
 }
 
 export function CustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customers, setCustomers] = useState<Customer[] | null>(null);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+  const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useNotice();
 
   async function load() {
     setCustomers(await apiFetch<Customer[]>("/api/customers"));
   }
 
   useEffect(() => {
-    load().catch(() => setError("No se pudieron cargar los clientes."));
+    load().catch(() => {
+      setCustomers([]);
+      setError("No se pudieron cargar los clientes.");
+    });
   }, []);
 
   async function handleSubmit(e: FormEvent) {
@@ -34,38 +41,76 @@ export function CustomersPage() {
       setName("");
       setAddress("");
       setPhone("");
+      setNotice("Cliente agregado.");
       await load();
     } catch {
       setError("No se pudo crear el cliente.");
     }
   }
 
+  const visible = (customers ?? []).filter((c) => matches(query, c.name, c.address, c.phone)).reverse();
+
   return (
-    <section>
-      <h2>Clientes</h2>
+    <>
+      <div className="page-head">
+        <div>
+          <h2>Clientes</h2>
+          <p>Destinos de entrega. Despues los ordenas en una ruta.</p>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="customer-name">Nombre</label>
-        <input id="customer-name" required value={name} onChange={(e) => setName(e.target.value)} />
+      <div className="split">
+        <form className="card form" onSubmit={handleSubmit}>
+          <h3>Nuevo cliente</h3>
 
-        <label htmlFor="customer-address">Direccion</label>
-        <input id="customer-address" required value={address} onChange={(e) => setAddress(e.target.value)} />
+          <div className="field">
+            <label htmlFor="customer-name">Nombre</label>
+            <input id="customer-name" required value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
 
-        <label htmlFor="customer-phone">Telefono</label>
-        <input id="customer-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <div className="field">
+            <label htmlFor="customer-address">Direccion</label>
+            <input id="customer-address" required value={address} onChange={(e) => setAddress(e.target.value)} />
+          </div>
 
-        {error && <p role="alert">{error}</p>}
+          <div className="field">
+            <label htmlFor="customer-phone">Telefono</label>
+            <input id="customer-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </div>
 
-        <button type="submit">Agregar cliente</button>
-      </form>
+          {error && <Notice tone="bad" role="alert">{error}</Notice>}
+          {notice && <Notice tone="ok" role="status" fade>{notice}</Notice>}
 
-      <ul>
-        {customers.map((c) => (
-          <li key={c.id}>
-            {c.name} - {c.address} {c.phone ? `- ${c.phone}` : ""}
-          </li>
-        ))}
-      </ul>
-    </section>
+          <button type="submit">Agregar cliente</button>
+        </form>
+
+        <section className="card" aria-label="Lista de clientes">
+          <div className="card-head">
+            <h3>Clientes registrados</h3>
+            <span className="chip brand num">{customers?.length ?? 0}</span>
+          </div>
+          <SearchBox label="Buscar cliente" value={query} onChange={setQuery} />
+
+          {customers === null ? (
+            <ListSkeleton />
+          ) : visible.length === 0 ? (
+            <Empty icon="customers" title={query ? "Sin resultados." : "Aun no hay clientes."}
+              hint={query ? "Prueba con otro nombre o direccion." : "Agrega el primero con el formulario."} />
+          ) : (
+            <ul className="rows">
+              {visible.map((c) => (
+                <li key={c.id}>
+                  <span className="avatar" aria-hidden="true">{initials(c.name)}</span>
+                  <div className="main">
+                    <strong>{c.name}</strong>
+                    <span>{c.address}{c.phone ? ` · ${c.phone}` : ""}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+    </>
   );
 }

@@ -3,18 +3,52 @@
     x:Class="FleetTrack.Mobile.Pages.LoginPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Ingresar">
+    Title="Ingresar"
+    Shell.NavBarIsVisible="False">
 
-    <VerticalStackLayout Padding="24" Spacing="12" VerticalOptions="Center">
-        <Label Text="FleetTrack" FontSize="28" HorizontalOptions="Center" />
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
 
-        <Entry x:Name="EmailEntry" Placeholder="Correo" Keyboard="Email" />
-        <Entry x:Name="PasswordEntry" Placeholder="Contrasena" IsPassword="True" />
+            <!-- Cabecera de marca -->
+            <Border BackgroundColor="#1D1259" StrokeThickness="0" Padding="28,72,28,40"
+                    StrokeShape="RoundRectangle 0,0,32,32">
+                <VerticalStackLayout Spacing="10">
+                    <Border BackgroundColor="{StaticResource Primary}" StrokeThickness="0" StrokeShape="RoundRectangle 14"
+                            WidthRequest="56" HeightRequest="56" HorizontalOptions="Start">
+                        <Label Text="F" TextColor="White" FontSize="28" FontAttributes="Bold"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <Label Text="FleetTrack" TextColor="White" FontSize="32" FontAttributes="Bold" />
+                    <Label Text="Tu ruta, tus entregas y tu ubicacion en un solo lugar." TextColor="#D6D0F4" FontSize="15" />
+                </VerticalStackLayout>
+            </Border>
 
-        <Label x:Name="ErrorLabel" TextColor="Red" IsVisible="False" />
+            <!-- Formulario -->
+            <VerticalStackLayout Padding="24,28,24,24" Spacing="14">
+                <Label Text="Inicia sesion para ver tu ruta" Style="{StaticResource Ink}" FontSize="18" FontAttributes="Bold" />
 
-        <Button x:Name="LoginButton" Text="Ingresar" Clicked="OnLoginClicked" />
-        <ActivityIndicator x:Name="LoadingIndicator" IsRunning="False" IsVisible="False" />
-    </VerticalStackLayout>
+                <Border Style="{StaticResource FieldBox}">
+                    <Entry x:Name="EmailEntry" Placeholder="Correo" Keyboard="Email" BackgroundColor="Transparent" />
+                </Border>
+                <Border Style="{StaticResource FieldBox}">
+                    <Entry x:Name="PasswordEntry" Placeholder="Contrasena" IsPassword="True" BackgroundColor="Transparent" />
+                </Border>
+
+                <Border Style="{StaticResource BannerBad}">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding Source={x:Reference ErrorLabel}, Path=IsVisible}" Value="False">
+                            <Setter Property="IsVisible" Value="False" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Label x:Name="ErrorLabel" TextColor="{AppThemeBinding Light={StaticResource BadInkLight}, Dark={StaticResource BadInkDark}}"
+                           IsVisible="False" />
+                </Border>
+
+                <Button x:Name="LoginButton" Text="Ingresar" Style="{StaticResource PrimaryAction}" Clicked="OnLoginClicked" Margin="0,6,0,0" />
+                <ActivityIndicator x:Name="LoadingIndicator" IsRunning="False" IsVisible="False" />
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
 
 </ContentPage>

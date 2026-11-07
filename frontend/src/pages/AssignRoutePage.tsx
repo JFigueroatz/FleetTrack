@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { apiFetch } from "../api/client";
+import { Empty, Notice } from "../components/ui";
 
 interface Driver { id: string; fullName: string; email: string }
 interface Vehicle { id: string; plate: string; model: string; capacityKg: number }
@@ -31,6 +32,12 @@ export function AssignRoutePage() {
       })
       .catch(() => setError("No se pudieron cargar conductores, vehiculos o clientes."));
   }, []);
+
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(null), 5000);
+    return () => clearTimeout(t);
+  }, [message]);
 
   function addCustomer() {
     if (customerToAdd && !orderedCustomerIds.includes(customerToAdd)) {
@@ -70,46 +77,74 @@ export function AssignRoutePage() {
   }
 
   return (
-    <section>
-      <h2>Asignar ruta</h2>
+    <>
+      <div className="page-head">
+        <div>
+          <h2>Asignar ruta</h2>
+          <p>Elige conductor y vehiculo, y agrega los clientes en el orden en que se visitaran.</p>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="driver-select">Conductor</label>
-        <select id="driver-select" required value={driverId} onChange={(e) => setDriverId(e.target.value)}>
-          <option value="">Selecciona...</option>
-          {drivers.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-        </select>
+      <form className="split" onSubmit={handleSubmit}>
+        <div className="card form">
+          <h3>Datos de la ruta</h3>
 
-        <label htmlFor="vehicle-select">Vehiculo</label>
-        <select id="vehicle-select" required value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
-          <option value="">Selecciona...</option>
-          {vehicles.map((v) => <option key={v.id} value={v.id}>{v.plate} - {v.model}</option>)}
-        </select>
+          <div className="field">
+            <label htmlFor="driver-select">Conductor</label>
+            <select id="driver-select" required value={driverId} onChange={(e) => setDriverId(e.target.value)}>
+              <option value="">Selecciona...</option>
+              {drivers.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
+            </select>
+          </div>
 
-        <label htmlFor="customer-select">Agregar cliente a la ruta</label>
-        <select id="customer-select" value={customerToAdd} onChange={(e) => setCustomerToAdd(e.target.value)}>
-          <option value="">Selecciona...</option>
-          {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <button type="button" onClick={addCustomer}>Agregar</button>
+          <div className="field">
+            <label htmlFor="vehicle-select">Vehiculo</label>
+            <select id="vehicle-select" required value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+              <option value="">Selecciona...</option>
+              {vehicles.map((v) => <option key={v.id} value={v.id}>{v.plate} - {v.model}</option>)}
+            </select>
+          </div>
 
-        <ol>
-          {orderedCustomerIds.map((id) => {
-            const customer = customers.find((c) => c.id === id);
-            return (
-              <li key={id}>
-                {customer?.name ?? id}
-                <button type="button" onClick={() => removeCustomer(id)}>Quitar</button>
-              </li>
-            );
-          })}
-        </ol>
+          <div className="form-row">
+            <div className="field">
+              <label htmlFor="customer-select">Agregar cliente a la ruta</label>
+              <select id="customer-select" value={customerToAdd} onChange={(e) => setCustomerToAdd(e.target.value)}>
+                <option value="">Selecciona...</option>
+                {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <button type="button" className="btn-quiet" onClick={addCustomer}>Agregar</button>
+          </div>
+        </div>
 
-        {error && <p role="alert">{error}</p>}
-        {message && <p>{message}</p>}
+        <section className="card form" aria-label="Orden de entregas">
+          <div className="card-head">
+            <h3>Orden de entregas</h3>
+            <span className="chip brand num">{orderedCustomerIds.length}</span>
+          </div>
 
-        <button type="submit">Crear ruta</button>
+          {orderedCustomerIds.length === 0 ? (
+            <Empty icon="route" title="Aun no hay paradas." hint="Agrega clientes en el orden de entrega: la primera parada es la primera que visitara el conductor." />
+          ) : (
+            <ol className="stops">
+              {orderedCustomerIds.map((id) => {
+                const customer = customers.find((c) => c.id === id);
+                return (
+                  <li key={id}>
+                    <span>{customer?.name ?? id}</span>
+                    <button type="button" className="btn-quiet btn-small" onClick={() => removeCustomer(id)}>Quitar</button>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+
+          {error && <Notice tone="bad" role="alert">{error}</Notice>}
+          {message && <Notice tone="ok" role="status" fade>{message}</Notice>}
+
+          <button type="submit">Crear ruta</button>
+        </section>
       </form>
-    </section>
+    </>
   );
 }
