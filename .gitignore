@@ -38,7 +38,23 @@ ansible/inventory.ini
 
 # Reports (contenido generado por los pipelines, no por el equipo)
 reports/**/*
+!reports/**/
 !reports/**/.gitkeep
+!reports/README.md
+# Evidencia que si se versiona (liviana e interpretable). Quedan fuera los volcados crudos de cobertura (XML de varios MB) y los registros.
+!reports/dependency-check/*.html
+!reports/zap/*.html
+!reports/zap/*.json
+!reports/sonar/*.json
+!reports/fortify/*.json
+!reports/performance/*.json
+!reports/performance/*.csv
+!reports/junit/*
+!reports/cypress/*
+!reports/maestro/*
+!reports/jenkins/*
+!reports/rabbitmq/*
+!reports/coverage/resumen.json
 
 # SonarQube (carpeta de trabajo del scanner)
 .sonarqube/

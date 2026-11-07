@@ -3,7 +3,13 @@ import { loginDriver, sendTracking } from "./common.js";
 
 // Spike: salto brusco de carga para ver como se comporta el sistema ante un pico repentino (p.ej. toda
 // la flota reconectando a la vez tras una caida) y si se recupera limpio al bajar.
+// Umbrales declarados antes de ejecutar: p95 < 1000 ms durante el salto y errores < 2 %. Los umbrales son mas
+// holgados que los de load porque el salto es brusco; lo que se exige es que el sistema no pierda peticiones.
 export const options = {
+  thresholds: {
+    http_req_duration: ["p(95)<1000"],
+    http_req_failed: ["rate<0.02"],
+  },
   scenarios: {
     spike: {
       executor: "ramping-vus",
