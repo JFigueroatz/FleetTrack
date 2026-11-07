@@ -3,8 +3,13 @@ import { loginDriver, sendTracking } from "./common.js";
 
 // Stress: sube la carga mas alla de lo normal para encontrar el limite (seccion 9 del plan).
 // Rampa de 100 a 300 VUs, sostiene en el pico y baja; el objetivo es observar saturacion/recuperacion,
-// no que pase sin errores — se revisan las metricas despues, no se aborta el run por threshold.
+// no que pase sin errores, asi que los umbrales se declaran pero NO abortan la corrida: el resultado se compara
+// contra ellos despues. Umbrales del pico (declarados antes de ejecutar): p95 < 800 ms y errores < 5 %.
 export const options = {
+  thresholds: {
+    http_req_duration: ["p(95)<800"],
+    http_req_failed: ["rate<0.05"],
+  },
   scenarios: {
     stress: {
       executor: "ramping-vus",
